@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
@@ -66,25 +65,24 @@ const Index = () => {
       )}
 
       {/* Categories Section */}
-      <section className="py-16">
-        <div className="container px-4 mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-semibold tracking-tight">Browse Categories</h2>
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/categories" className="text-muted-foreground hover:text-accent">
-                View all
-              </Link>
-            </Button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {categories.slice(0, 6).map((category, index) => (
-              <div key={category.id} className="animate-slide-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                <CategoryCard category={category} />
-              </div>
-            ))}
-          </div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-2xl font-bold">Popular Categories</h2>
+          <Link to="/categories" className="text-accent hover:underline flex items-center">
+            View All Categories 
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
         </div>
-      </section>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {categories.slice(0, 6).map((category, index) => (
+            <div key={category.id} className="animate-slide-in" style={{ animationDelay: `${index * 0.1}s` }}>
+              <CategoryCard category={category} />
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Recent Discussions Section */}
       <section className="py-16 bg-secondary/30">
