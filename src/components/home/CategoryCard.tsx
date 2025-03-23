@@ -1,6 +1,7 @@
 
 import { Link } from "react-router-dom";
-import { Category, getIconByName } from "@/lib/mockData";
+import { Category } from "@/lib/mockData";
+import CategoryIcon from "@/components/ui/CategoryIcon";
 
 interface CategoryCardProps {
   category: Category;
@@ -14,7 +15,7 @@ const CategoryCard = ({ category }: CategoryCardProps) => {
     >
       <div className="flex items-start gap-4">
         <div className={`inline-flex items-center justify-center rounded-lg p-2 ${category.color}`}>
-          {getIconByName(category.icon)}
+          <CategoryIcon iconName={category.icon} />
         </div>
         <div>
           <h3 className="font-medium mb-1">{category.name}</h3>

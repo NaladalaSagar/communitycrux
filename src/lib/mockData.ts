@@ -1,3 +1,4 @@
+
 import { MessageSquare, BarChart3, Briefcase, Lightbulb, BookOpen, Globe } from "lucide-react";
 import { ReactNode } from "react";
 
@@ -253,22 +254,14 @@ export const comments: Comment[] = [
   }
 ];
 
-// Helper function to get icon component by name
-export const getIconByName = (iconName: string): ReactNode => {
-  const icons: Record<string, any> = {
-    MessageSquare,
-    BarChart3,
-    Briefcase,
-    Lightbulb,
-    BookOpen,
-    Globe
-  };
-  
-  const IconComponent = icons[iconName];
-  if (IconComponent) {
-    return <IconComponent className="h-5 w-5" />;
-  }
-  return null;
+// Export icons for the icon utility component
+export const iconSet = {
+  MessageSquare,
+  BarChart3,
+  Briefcase,
+  Lightbulb,
+  BookOpen,
+  Globe
 };
 
 // Helper function to get threads by category
