@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
@@ -5,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CategoryCard from "@/components/home/CategoryCard";
-import FeaturedThread from "@/components/home/FeaturedThread";
+import ExpandableFeaturedThread from "@/components/home/ExpandableFeaturedThread";
 import ThreadCard from "@/components/thread/ThreadCard";
 import AuthModal from "@/components/auth/AuthModal";
 import { MessageSquare, TrendingUp, Clock, Plus, Search } from "lucide-react";
@@ -30,10 +31,10 @@ const Index = () => {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in" style={{ animationDelay: "0.2s" }}>
               <AuthModal 
-                trigger={<Button size="lg" className="bg-accent hover:bg-accent/90 flex">Join the community</Button>}
+                trigger={<Button size="lg" className="bg-accent hover:bg-accent/90 flex animate-scale-in">Join the community</Button>}
                 defaultTab="register"
               />
-              <Button variant="outline" size="lg" asChild>
+              <Button variant="outline" size="lg" asChild className="animate-scale-in" style={{ animationDelay: "0.1s" }}>
                 <Link to="/categories">Browse topics</Link>
               </Button>
             </div>
@@ -46,8 +47,8 @@ const Index = () => {
         <section className="py-16 bg-secondary/30">
           <div className="container px-4 mx-auto">
             <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-semibold tracking-tight">Featured Discussions</h2>
-              <Button variant="ghost" size="sm" asChild>
+              <h2 className="text-2xl font-semibold tracking-tight animate-slide-in">Featured Discussions</h2>
+              <Button variant="ghost" size="sm" asChild className="animate-slide-in" style={{ animationDelay: "0.1s" }}>
                 <Link to="/featured" className="text-muted-foreground hover:text-accent">
                   View all
                 </Link>
@@ -56,7 +57,7 @@ const Index = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {featuredThreads.map((thread) => (
                 <div key={thread.id} className="animate-slide-in" style={{ animationDelay: `${featuredThreads.indexOf(thread) * 0.1}s` }}>
-                  <FeaturedThread thread={thread} />
+                  <ExpandableFeaturedThread thread={thread} />
                 </div>
               ))}
             </div>
@@ -67,8 +68,8 @@ const Index = () => {
       {/* Categories Section */}
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl font-bold">Popular Categories</h2>
-          <Link to="/categories" className="text-accent hover:underline flex items-center">
+          <h2 className="text-2xl font-bold animate-slide-in">Popular Categories</h2>
+          <Link to="/categories" className="text-accent hover:underline flex items-center animate-slide-in" style={{ animationDelay: "0.1s" }}>
             View All Categories 
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -88,10 +89,10 @@ const Index = () => {
       <section className="py-16 bg-secondary/30">
         <div className="container px-4 mx-auto">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-            <h2 className="text-2xl font-semibold tracking-tight">Latest Discussions</h2>
+            <h2 className="text-2xl font-semibold tracking-tight animate-slide-in">Latest Discussions</h2>
             
             <div className="flex items-center">
-              <div className="relative mr-4 flex-grow md:w-64">
+              <div className="relative mr-4 flex-grow md:w-64 animate-slide-in" style={{ animationDelay: "0.1s" }}>
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="text"
@@ -102,7 +103,7 @@ const Index = () => {
                 />
               </div>
 
-              <Button className="bg-accent hover:bg-accent/90" asChild>
+              <Button className="bg-accent hover:bg-accent/90 animate-slide-in" style={{ animationDelay: "0.2s" }} asChild>
                 <Link to="/create-thread" className="flex items-center">
                   <Plus className="h-4 w-4 mr-2" /> New Thread
                 </Link>
@@ -110,7 +111,7 @@ const Index = () => {
             </div>
           </div>
           
-          <Tabs defaultValue="recent" className="w-full">
+          <Tabs defaultValue="recent" className="w-full animate-fade-in" style={{ animationDelay: "0.2s" }}>
             <div className="flex justify-center mb-6">
               <TabsList>
                 <TabsTrigger value="recent" className="flex items-center">
@@ -130,7 +131,7 @@ const Index = () => {
                 <ThreadCard key={thread.id} thread={thread} showCategory={true} />
               ))}
               <div className="flex justify-center mt-8">
-                <Button variant="outline" asChild>
+                <Button variant="outline" asChild className="animate-scale-in">
                   <Link to="/recent">View more discussions</Link>
                 </Button>
               </div>
@@ -145,7 +146,7 @@ const Index = () => {
                   <ThreadCard key={thread.id} thread={thread} showCategory={true} />
                 ))}
               <div className="flex justify-center mt-8">
-                <Button variant="outline" asChild>
+                <Button variant="outline" asChild className="animate-scale-in">
                   <Link to="/popular">View more popular discussions</Link>
                 </Button>
               </div>
@@ -159,7 +160,7 @@ const Index = () => {
                   <ThreadCard key={thread.id} thread={thread} showCategory={true} />
                 ))}
               <div className="flex justify-center mt-8">
-                <Button variant="outline" asChild>
+                <Button variant="outline" asChild className="animate-scale-in">
                   <Link to="/unanswered">View more unanswered discussions</Link>
                 </Button>
               </div>
@@ -173,20 +174,20 @@ const Index = () => {
         <div className="container px-4 mx-auto">
           <div className="glass-effect rounded-2xl overflow-hidden">
             <div className="p-8 md:p-12 flex flex-col items-center text-center">
-              <h2 className="text-2xl md:text-3xl font-bold mb-4">Ready to join the conversation?</h2>
-              <p className="text-muted-foreground mb-8 max-w-2xl">
+              <h2 className="text-2xl md:text-3xl font-bold mb-4 animate-fade-in">Ready to join the conversation?</h2>
+              <p className="text-muted-foreground mb-8 max-w-2xl animate-fade-in" style={{ animationDelay: "0.1s" }}>
                 Create an account today to start posting, commenting, and connecting with other members of our community.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <AuthModal 
                   trigger={
-                    <Button size="lg" className="bg-accent hover:bg-accent/90">
+                    <Button size="lg" className="bg-accent hover:bg-accent/90 animate-scale-in" style={{ animationDelay: "0.2s" }}>
                       Sign up now
                     </Button>
                   }
                   defaultTab="register"
                 />
-                <Button variant="outline" size="lg" asChild>
+                <Button variant="outline" size="lg" asChild className="animate-scale-in" style={{ animationDelay: "0.3s" }}>
                   <Link to="/categories">
                     Explore first
                   </Link>

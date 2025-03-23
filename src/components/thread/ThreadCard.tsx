@@ -14,7 +14,7 @@ interface ThreadCardProps {
 
 const ThreadCard = ({ thread, showCategory = false }: ThreadCardProps) => {
   return (
-    <div className="bg-card rounded-xl border border-border/50 overflow-hidden transition-all duration-300 hover:shadow-soft group">
+    <div className="bg-card rounded-xl border border-border/50 overflow-hidden transition-all duration-300 hover:shadow-soft group hover:translate-y-[-2px]">
       <div className="flex">
         {/* Vote column */}
         <div className="bg-secondary/50 p-4 flex flex-col items-center justify-start gap-1 min-w-[60px]">
@@ -32,17 +32,17 @@ const ThreadCard = ({ thread, showCategory = false }: ThreadCardProps) => {
             <div className="mb-2">
               <div className="flex flex-wrap items-center gap-2 mb-1.5">
                 {thread.isPinned && (
-                  <Badge variant="outline" className="text-xs px-1.5 py-0 border-accent/50 text-accent">
+                  <Badge variant="outline" className="text-xs px-1.5 py-0 border-accent/50 text-accent animate-pulse">
                     Pinned
                   </Badge>
                 )}
                 {showCategory && (
-                  <Badge variant="secondary" className="text-xs px-1.5 py-0">
+                  <Badge variant="secondary" className="text-xs px-1.5 py-0 animate-fade-in" style={{ animationDelay: "0.1s" }}>
                     {thread.categoryId}
                   </Badge>
                 )}
                 {thread.tags && thread.tags.length > 0 && thread.tags.slice(0, 3).map((tag, index) => (
-                  <Badge key={index} variant="outline" className="text-xs px-1.5 py-0">
+                  <Badge key={index} variant="outline" className="text-xs px-1.5 py-0 animate-fade-in" style={{ animationDelay: `${0.1 * (index + 1)}s` }}>
                     {tag}
                   </Badge>
                 ))}

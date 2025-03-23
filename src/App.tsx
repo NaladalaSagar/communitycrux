@@ -10,6 +10,8 @@ import CategoryPage from "./pages/CategoryPage";
 import CategoriesPage from "./pages/CategoriesPage";
 import CreateThread from "./pages/CreateThread";
 import NotFound from "./pages/NotFound";
+import PopularThreadsPage from "./pages/PopularThreadsPage";
+import RecentThreadsPage from "./pages/RecentThreadsPage";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +27,8 @@ const App = () => (
           <Route path="/category/:categoryId" element={<CategoryPage />} />
           <Route path="/categories" element={<CategoriesPage />} />
           <Route path="/create-thread" element={<CreateThread />} />
+          <Route path="/popular" element={<PopularThreadsPage />} />
+          <Route path="/recent" element={<RecentThreadsPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
