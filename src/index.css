@@ -84,7 +84,7 @@
   
   /* Custom transitions */
   .custom-transition {
-    @apply transition-all duration-300 ease-in-out;
+    @apply transition duration-300 ease-in-out;
   }
   
   /* Glass morphism */

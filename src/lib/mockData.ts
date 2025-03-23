@@ -1,4 +1,3 @@
-
 import { MessageSquare, BarChart3, Briefcase, Lightbulb, BookOpen, Globe } from "lucide-react";
 import { ReactNode } from "react";
 
@@ -8,7 +7,7 @@ export interface Category {
   name: string;
   description: string;
   threadCount: number;
-  icon: ReactNode;
+  icon: string;
   color: string;
 }
 
@@ -54,7 +53,7 @@ export const categories: Category[] = [
     name: "General Discussion",
     description: "Community discussions and announcements",
     threadCount: 127,
-    icon: <MessageSquare className="h-5 w-5" />,
+    icon: "MessageSquare",
     color: "bg-blue-100 text-blue-500"
   },
   {
@@ -62,7 +61,7 @@ export const categories: Category[] = [
     name: "Data Analysis",
     description: "Questions about data processing and visualization",
     threadCount: 89,
-    icon: <BarChart3 className="h-5 w-5" />,
+    icon: "BarChart3",
     color: "bg-purple-100 text-purple-500"
   },
   {
@@ -70,7 +69,7 @@ export const categories: Category[] = [
     name: "Professional Development",
     description: "Career advice and industry insights",
     threadCount: 65,
-    icon: <Briefcase className="h-5 w-5" />,
+    icon: "Briefcase",
     color: "bg-amber-100 text-amber-600"
   },
   {
@@ -78,7 +77,7 @@ export const categories: Category[] = [
     name: "Product Ideas",
     description: "Share your innovative product concepts",
     threadCount: 43,
-    icon: <Lightbulb className="h-5 w-5" />,
+    icon: "Lightbulb",
     color: "bg-yellow-100 text-yellow-600"
   },
   {
@@ -86,7 +85,7 @@ export const categories: Category[] = [
     name: "Learning Resources",
     description: "Tutorials, guides, and educational content",
     threadCount: 72,
-    icon: <BookOpen className="h-5 w-5" />,
+    icon: "BookOpen",
     color: "bg-emerald-100 text-emerald-600"
   },
   {
@@ -94,7 +93,7 @@ export const categories: Category[] = [
     name: "Global Insights",
     description: "Industry news and worldwide developments",
     threadCount: 58,
-    icon: <Globe className="h-5 w-5" />,
+    icon: "Globe",
     color: "bg-indigo-100 text-indigo-500"
   }
 ];
@@ -253,3 +252,28 @@ export const comments: Comment[] = [
     isAcceptedAnswer: true
   }
 ];
+
+// Helper function to get icon component by name
+export const getIconByName = (iconName: string): ReactNode => {
+  const icons: Record<string, any> = {
+    MessageSquare,
+    BarChart3,
+    Briefcase,
+    Lightbulb,
+    BookOpen,
+    Globe
+  };
+  
+  const IconComponent = icons[iconName];
+  return IconComponent ? <IconComponent className="h-5 w-5" /> : null;
+};
+
+// Add this helper function
+export const getThreadsByCategory = (categoryId: string): Thread[] => {
+  return threads.filter(thread => thread.categoryId === categoryId);
+};
+
+// Add this helper function 
+export const getFeaturedThreads = (): Thread[] => {
+  return threads.filter(thread => thread.isFeatured);
+};

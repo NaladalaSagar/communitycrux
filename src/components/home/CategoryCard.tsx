@@ -1,8 +1,6 @@
 
-import { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import { Category } from "@/lib/mockData";
+import { Category, getIconByName } from "@/lib/mockData";
 
 interface CategoryCardProps {
   category: Category;
@@ -10,32 +8,21 @@ interface CategoryCardProps {
 
 const CategoryCard = ({ category }: CategoryCardProps) => {
   return (
-    <Link 
+    <Link
       to={`/category/${category.id}`}
-      className="group"
+      className="block h-full rounded-xl border border-border/50 bg-card p-6 transition-all duration-300 hover:shadow-soft"
     >
-      <div className="h-full bg-card hover:bg-card/90 rounded-xl p-6 border border-border/50 transition-all duration-300 shadow-soft hover:shadow-medium overflow-hidden group-hover:translate-y-[-2px]">
-        <div className="flex flex-col h-full">
-          <div className={cn(
-            "inline-flex self-start items-center justify-center rounded-lg p-2 mb-4",
-            category.color
-          )}>
-            {category.icon}
-          </div>
-          
-          <div className="space-y-2 mb-2 flex-grow">
-            <h3 className="font-semibold text-lg tracking-tight group-hover:text-accent transition-colors">
-              {category.name}
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              {category.description}
-            </p>
-          </div>
-          
-          <div className="pt-4 mt-auto border-t border-border/40">
-            <p className="text-sm text-muted-foreground">
-              <span className="font-medium text-primary">{category.threadCount}</span> threads
-            </p>
+      <div className="flex items-start gap-4">
+        <div className={`inline-flex items-center justify-center rounded-lg p-2 ${category.color}`}>
+          {getIconByName(category.icon)}
+        </div>
+        <div>
+          <h3 className="font-medium mb-1">{category.name}</h3>
+          <p className="text-sm text-muted-foreground mb-3">
+            {category.description}
+          </p>
+          <div className="text-xs text-muted-foreground">
+            <span className="font-medium">{category.threadCount}</span> threads
           </div>
         </div>
       </div>
