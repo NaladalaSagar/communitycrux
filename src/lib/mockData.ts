@@ -265,15 +265,18 @@ export const getIconByName = (iconName: string): ReactNode => {
   };
   
   const IconComponent = icons[iconName];
-  return IconComponent ? <IconComponent className="h-5 w-5" /> : null;
+  if (IconComponent) {
+    return <IconComponent className="h-5 w-5" />;
+  }
+  return null;
 };
 
-// Add this helper function
+// Helper function to get threads by category
 export const getThreadsByCategory = (categoryId: string): Thread[] => {
   return threads.filter(thread => thread.categoryId === categoryId);
 };
 
-// Add this helper function 
+// Helper function to get featured threads
 export const getFeaturedThreads = (): Thread[] => {
   return threads.filter(thread => thread.isFeatured);
 };
