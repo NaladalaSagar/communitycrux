@@ -10,6 +10,7 @@ import AuthModal from "@/components/auth/AuthModal";
 import { Search, Plus, Clock, TrendingUp, ArrowLeft } from "lucide-react";
 import { categories, getThreadsByCategory } from "@/lib/mockData";
 import { Thread } from "@/lib/mockData";
+import CategoryIcon from "@/components/ui/CategoryIcon";
 
 const CategoryPage = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
@@ -62,6 +63,20 @@ const CategoryPage = () => {
   
   return (
     <Layout>
+      {/* Banner with Image */}
+      <div className="w-full h-48 sm:h-56 md:h-64 lg:h-72 relative overflow-hidden">
+        <img 
+          src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=3882&q=80" 
+          alt="Forum banner" 
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white">
+            Community Forum
+          </h1>
+        </div>
+      </div>
+      
       {/* Header */}
       <div className="bg-secondary/30 py-12">
         <div className="container mx-auto px-4">
@@ -74,7 +89,7 @@ const CategoryPage = () => {
           </div>
           <div className="flex items-center mb-2">
             <div className={`inline-flex items-center justify-center rounded-lg p-2 mr-4 ${category.color}`}>
-              {category.icon}
+              <CategoryIcon iconName={category.icon} />
             </div>
             <h1 className="text-3xl font-bold">{category.name}</h1>
           </div>
