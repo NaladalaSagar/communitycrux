@@ -1,15 +1,57 @@
 
 import { Link } from "react-router-dom";
-import { Calendar, MessageCircle } from "lucide-react";
+import { Calendar, MessageCircle, ThumbsUp, ThumbsDown } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Thread } from "@/lib/mockData";
 import { formatDistanceToNow } from "date-fns";
+import { useState } from "react";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface FeaturedThreadProps {
   thread: Thread;
 }
 
-const FeaturedThread = ({ thread }: FeaturedThreadProps) => {
+const FeaturedThread = ({ thread: initialThread }: FeaturedThreadProps) => {
+  const [thread, setThread] = useState(initialThread);
+  const [voteState, setVoteState] = useState<"up" | "down" | null>(null);
+  
+  const handleVote = (type: "up" | "down", event: React.MouseEvent) => {
+    // Prevent navigation when clicking on vote buttons
+    event.preventDefault();
+    event.stopPropagation();
+    
+    if (voteState === type) {
+      // Remove vote
+      setVoteState(null);
+      setThread(prev => ({
+        ...prev,
+        [type === "up" ? "upvotes" : "downvotes"]: prev[type === "up" ? "upvotes" : "downvotes"] - 1
+      }));
+      toast.info(`${type === "up" ? "Upvote" : "Downvote"} removed`);
+    } else {
+      // Add new vote and remove opposite if exists
+      if (voteState !== null) {
+        // Remove existing vote first
+        setThread(prev => ({
+          ...prev,
+          [voteState === "up" ? "upvotes" : "downvotes"]: prev[voteState === "up" ? "upvotes" : "downvotes"] - 1
+        }));
+      }
+      
+      // Add new vote
+      setVoteState(type);
+      setThread(prev => ({
+        ...prev,
+        [type === "up" ? "upvotes" : "downvotes"]: prev[type === "up" ? "upvotes" : "downvotes"] + 1
+      }));
+      
+      toast.success(`${type === "up" ? "Upvoted" : "Downvoted"} successfully`);
+    }
+  };
+  
+  const voteCount = thread.upvotes - thread.downvotes;
+  
   return (
     <Link 
       to={`/thread/${thread.id}`} 
@@ -61,6 +103,34 @@ const FeaturedThread = ({ thread }: FeaturedThreadProps) => {
               <div className="flex items-center space-x-1">
                 <MessageCircle className="h-4 w-4" />
                 <span className="text-xs">{thread.commentCount}</span>
+              </div>
+              
+              {/* Vote buttons */}
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={(e) => handleVote("up", e)}
+                  className={cn(
+                    "p-1 rounded-full transition-colors hover:bg-accent/10",
+                    voteState === "up" ? "text-accent" : "text-muted-foreground hover:text-accent"
+                  )}
+                >
+                  <ThumbsUp className="h-4 w-4" />
+                </button>
+                <span className={cn(
+                  "text-xs font-medium",
+                  voteCount > 0 ? "text-accent" : voteCount < 0 ? "text-destructive" : "text-muted-foreground"
+                )}>
+                  {voteCount}
+                </span>
+                <button 
+                  onClick={(e) => handleVote("down", e)}
+                  className={cn(
+                    "p-1 rounded-full transition-colors hover:bg-destructive/10",
+                    voteState === "down" ? "text-destructive" : "text-muted-foreground hover:text-destructive"
+                  )}
+                >
+                  <ThumbsDown className="h-4 w-4" />
+                </button>
               </div>
             </div>
           </div>

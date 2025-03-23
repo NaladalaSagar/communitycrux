@@ -1,10 +1,11 @@
 
 import { Link } from "react-router-dom";
-import { Calendar, MessageCircle, ArrowUp, ArrowDown } from "lucide-react";
+import { Calendar, MessageCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Thread } from "@/lib/mockData";
 import { formatDistanceToNow } from "date-fns";
+import VoteButtons from "@/components/ui/VoteButtons";
 
 interface ThreadCardProps {
   thread: Thread;
@@ -17,13 +18,11 @@ const ThreadCard = ({ thread, showCategory = false }: ThreadCardProps) => {
       <div className="flex">
         {/* Vote column */}
         <div className="bg-secondary/50 p-4 flex flex-col items-center justify-start gap-1 min-w-[60px]">
-          <button className="rounded-full p-1 hover:bg-background transition-colors">
-            <ArrowUp className="h-5 w-5 text-muted-foreground hover:text-accent transition-colors" />
-          </button>
-          <span className="font-medium text-sm">{thread.upvotes - thread.downvotes}</span>
-          <button className="rounded-full p-1 hover:bg-background transition-colors">
-            <ArrowDown className="h-5 w-5 text-muted-foreground hover:text-destructive transition-colors" />
-          </button>
+          <VoteButtons 
+            upvotes={thread.upvotes} 
+            downvotes={thread.downvotes}
+            size="sm"
+          />
         </div>
         
         {/* Content */}
@@ -80,6 +79,13 @@ const ThreadCard = ({ thread, showCategory = false }: ThreadCardProps) => {
                 <div className="flex items-center space-x-1">
                   <MessageCircle className="h-3.5 w-3.5" />
                   <span className="text-xs">{thread.commentCount}</span>
+                </div>
+                {/* Compact vote display */}
+                <div className="flex items-center gap-0.5 text-xs">
+                  <span className={thread.upvotes > thread.downvotes ? "text-accent" : "text-destructive"}>
+                    {thread.upvotes - thread.downvotes}
+                  </span>
+                  <span className="text-muted-foreground">votes</span>
                 </div>
               </div>
             </div>
