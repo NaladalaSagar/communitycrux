@@ -25,6 +25,7 @@ export interface Thread {
   tags: string[];
   views: number;
   isFeatured?: boolean;
+  isPinned?: boolean;
 }
 
 export interface Comment {
@@ -37,14 +38,18 @@ export interface Comment {
   downvotes: number;
   parentId?: string;
   isAcceptedAnswer?: boolean;
+  isAnswer?: boolean;
+  children?: Comment[];
 }
 
 export interface User {
   id: string;
   username: string;
+  name: string;
   avatar: string;
   joinedAt: string;
   reputation: number;
+  role?: "admin" | "moderator" | "user";
 }
 
 // Sample Data
@@ -104,30 +109,38 @@ export const users: User[] = [
   {
     id: "user1",
     username: "alex_johnson",
+    name: "Alex Johnson",
     avatar: "https://i.pravatar.cc/150?img=1",
     joinedAt: "2023-01-15T14:30:00Z",
-    reputation: 2458
+    reputation: 2458,
+    role: "admin"
   },
   {
     id: "user2",
     username: "samantha_dev",
+    name: "Samantha Dev",
     avatar: "https://i.pravatar.cc/150?img=2",
     joinedAt: "2022-11-23T09:45:00Z",
-    reputation: 3721
+    reputation: 3721,
+    role: "moderator"
   },
   {
     id: "user3",
     username: "tech_guru",
+    name: "Tech Guru",
     avatar: "https://i.pravatar.cc/150?img=3",
     joinedAt: "2023-03-10T16:20:00Z",
-    reputation: 1845
+    reputation: 1845,
+    role: "user"
   },
   {
     id: "user4",
     username: "code_master",
+    name: "Code Master",
     avatar: "https://i.pravatar.cc/150?img=4",
     joinedAt: "2022-08-05T11:15:00Z",
-    reputation: 4562
+    reputation: 4562,
+    role: "user"
   }
 ];
 
@@ -145,7 +158,8 @@ export const threads: Thread[] = [
     commentCount: 28,
     tags: ["announcement", "welcome", "community"],
     views: 2453,
-    isFeatured: true
+    isFeatured: true,
+    isPinned: true
   },
   {
     id: "thread2",
@@ -211,7 +225,8 @@ export const comments: Comment[] = [
     createdAt: "2023-06-10T16:05:00Z",
     threadId: "thread1",
     upvotes: 24,
-    downvotes: 0
+    downvotes: 0,
+    isAnswer: false
   },
   {
     id: "comment2",
@@ -220,7 +235,8 @@ export const comments: Comment[] = [
     createdAt: "2023-06-10T16:30:00Z",
     threadId: "thread1",
     upvotes: 15,
-    downvotes: 0
+    downvotes: 0,
+    isAnswer: false
   },
   {
     id: "comment3",
@@ -230,7 +246,8 @@ export const comments: Comment[] = [
     threadId: "thread1",
     upvotes: 19,
     downvotes: 0,
-    parentId: "comment2"
+    parentId: "comment2",
+    isAnswer: true
   },
   {
     id: "comment4",
@@ -239,7 +256,8 @@ export const comments: Comment[] = [
     createdAt: "2023-06-08T10:20:00Z",
     threadId: "thread2",
     upvotes: 32,
-    downvotes: 1
+    downvotes: 1,
+    isAnswer: false
   },
   {
     id: "comment5",
@@ -250,7 +268,8 @@ export const comments: Comment[] = [
     upvotes: 27,
     downvotes: 0,
     parentId: "comment4",
-    isAcceptedAnswer: true
+    isAcceptedAnswer: true,
+    isAnswer: true
   }
 ];
 
@@ -272,4 +291,42 @@ export const getThreadsByCategory = (categoryId: string): Thread[] => {
 // Helper function to get featured threads
 export const getFeaturedThreads = (): Thread[] => {
   return threads.filter(thread => thread.isFeatured);
+};
+
+// Helper function to get thread by ID
+export const getThreadById = (threadId: string | undefined): Thread | undefined => {
+  if (!threadId) return undefined;
+  return threads.find(thread => thread.id === threadId);
+};
+
+// Helper function to get comments by thread ID
+export const getCommentsByThreadId = (threadId: string): Comment[] => {
+  // First, get all comments for this thread
+  const threadComments = comments.filter(comment => comment.threadId === threadId);
+  
+  // Create a map to organize comments by their IDs
+  const commentMap = new Map<string, Comment>();
+  threadComments.forEach(comment => {
+    // Initialize children array for each comment
+    commentMap.set(comment.id, { ...comment, children: [] });
+  });
+  
+  // Organize into a hierarchy (parent-child relationship)
+  const rootComments: Comment[] = [];
+  
+  threadComments.forEach(comment => {
+    const commentWithChildren = commentMap.get(comment.id)!;
+    
+    if (comment.parentId && commentMap.has(comment.parentId)) {
+      // This is a child comment, add it to its parent's children array
+      const parent = commentMap.get(comment.parentId)!;
+      if (!parent.children) parent.children = [];
+      parent.children.push(commentWithChildren);
+    } else {
+      // This is a root comment, add it to the rootComments array
+      rootComments.push(commentWithChildren);
+    }
+  });
+  
+  return rootComments;
 };
