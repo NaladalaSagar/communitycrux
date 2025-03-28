@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Search, Menu, X, Bell, MessageSquare, User as UserIcon, FileText } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -9,17 +9,28 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import AuthModal from "@/components/auth/AuthModal";
 import { toast } from "sonner";
+import NotificationPanel from "@/components/notifications/NotificationPanel";
+import { useNotifications } from "@/contexts/NotificationContext";
 
 const Header = () => {
+  const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false); // Mock auth state
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const { addNotification } = useNotifications();
 
   // Load authentication state from localStorage on component mount
   useEffect(() => {
     const authState = localStorage.getItem("isAuthenticated");
     if (authState === "true") {
       setIsAuthenticated(true);
+      
+      // Load user data
+      const userData = localStorage.getItem("user");
+      if (userData) {
+        setUser(JSON.parse(userData));
+      }
     }
   }, []);
 
@@ -27,7 +38,20 @@ const Header = () => {
   const handleLogin = () => {
     setIsAuthenticated(true);
     localStorage.setItem("isAuthenticated", "true");
+    
+    // Load updated user data
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
+    
     toast.success("Logged in successfully");
+    
+    // Add a welcome notification
+    addNotification(
+      "Welcome back!",
+      "Thanks for logging in. Explore the latest discussions in the community."
+    );
   };
 
   // Handle logout
@@ -121,31 +145,23 @@ const Header = () => {
 
           {isAuthenticated ? (
             <>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-full relative"
-                aria-label="Notifications"
-              >
-                <Bell className="h-5 w-5" />
-                <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-accent"></span>
-              </Button>
+              <NotificationPanel />
               
               <Sheet>
                 <SheetTrigger asChild>
                   <Avatar className="h-9 w-9 cursor-pointer border-2 border-transparent hover:border-primary/20 transition-all">
-                    <AvatarImage src="https://i.pravatar.cc/150?img=1" alt="User avatar" />
-                    <AvatarFallback>AM</AvatarFallback>
+                    <AvatarImage src={user?.avatar || "https://i.pravatar.cc/150?img=1"} alt="User avatar" />
+                    <AvatarFallback>{user?.name?.slice(0, 2).toUpperCase() || "AM"}</AvatarFallback>
                   </Avatar>
                 </SheetTrigger>
                 <SheetContent>
                   <div className="pt-6 pb-4 flex flex-col items-center">
                     <Avatar className="h-16 w-16 mb-3">
-                      <AvatarImage src="https://i.pravatar.cc/150?img=1" alt="User avatar" />
-                      <AvatarFallback>AM</AvatarFallback>
+                      <AvatarImage src={user?.avatar || "https://i.pravatar.cc/150?img=1"} alt="User avatar" />
+                      <AvatarFallback>{user?.name?.slice(0, 2).toUpperCase() || "AM"}</AvatarFallback>
                     </Avatar>
-                    <h3 className="text-lg font-semibold">Alex Morgan</h3>
-                    <p className="text-sm text-muted-foreground">alex@example.com</p>
+                    <h3 className="text-lg font-semibold">{user?.name || "Alex Morgan"}</h3>
+                    <p className="text-sm text-muted-foreground">{user?.email || "alex@example.com"}</p>
                   </div>
                   <nav className="space-y-1 mt-4">
                     <Link to="/profile" className="flex items-center space-x-2 px-4 py-3 rounded-md hover:bg-secondary transition-colors">
