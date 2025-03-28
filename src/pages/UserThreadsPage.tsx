@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -8,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
 import { FileEdit, Trash2, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
-import { getRecentThreads } from "@/lib/mockData";
+import { threads } from "@/lib/mockData";
 
 const UserThreadsPage = () => {
   const navigate = useNavigate();
@@ -28,8 +27,7 @@ const UserThreadsPage = () => {
     
     // In a real app, we would fetch user's threads from the backend
     // For this demo, we'll use the first 3 threads from the mock data
-    const allThreads = getRecentThreads();
-    const mockUserThreads = allThreads.slice(0, 3).map(thread => ({
+    const mockUserThreads = threads.slice(0, 3).map(thread => ({
       ...thread,
       isUserThread: true
     }));
