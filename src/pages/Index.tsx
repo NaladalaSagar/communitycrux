@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
@@ -36,11 +35,9 @@ const Index = () => {
               Join our thriving community to share knowledge, ask questions, and connect with like-minded individuals.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in" style={{ animationDelay: "0.2s" }}>
-              <AuthModal 
-                trigger={<Button size="lg" className="bg-accent hover:bg-accent/90 flex animate-scale-in">Join the community</Button>}
-                defaultTab="register"
-                onSuccess={handleJoinCommunity}
-              />
+              <Button size="lg" className="bg-accent hover:bg-accent/90 flex animate-scale-in" asChild>
+                <Link to="/create-thread">Create Thread</Link>
+              </Button>
               <Button variant="outline" size="lg" asChild className="animate-scale-in" style={{ animationDelay: "0.1s" }}>
                 <Link to="/categories">Browse topics</Link>
               </Button>
