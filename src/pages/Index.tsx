@@ -15,6 +15,12 @@ import { categories, getFeaturedThreads, threads } from "@/lib/mockData";
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const featuredThreads = getFeaturedThreads();
+  
+  // Function to directly handle join community action
+  const handleJoinCommunity = () => {
+    // Simply trigger onSuccess callback to proceed
+    return true;
+  };
 
   return (
     <Layout>
@@ -33,6 +39,7 @@ const Index = () => {
               <AuthModal 
                 trigger={<Button size="lg" className="bg-accent hover:bg-accent/90 flex animate-scale-in">Join the community</Button>}
                 defaultTab="register"
+                onSuccess={handleJoinCommunity}
               />
               <Button variant="outline" size="lg" asChild className="animate-scale-in" style={{ animationDelay: "0.1s" }}>
                 <Link to="/categories">Browse topics</Link>
@@ -179,14 +186,6 @@ const Index = () => {
                 Create an account today to start posting, commenting, and connecting with other members of our community.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <AuthModal 
-                  trigger={
-                    <Button size="lg" className="bg-accent hover:bg-accent/90 animate-scale-in" style={{ animationDelay: "0.2s" }}>
-                      Sign up now
-                    </Button>
-                  }
-                  defaultTab="register"
-                />
                 <Button variant="outline" size="lg" asChild className="animate-scale-in" style={{ animationDelay: "0.3s" }}>
                   <Link to="/categories">
                     Explore first
