@@ -11,9 +11,10 @@ import { Eye, EyeOff } from "lucide-react";
 interface AuthModalProps {
   trigger: React.ReactNode;
   defaultTab?: "login" | "register";
+  onSuccess?: () => void;
 }
 
-const AuthModal = ({ trigger, defaultTab = "login" }: AuthModalProps) => {
+const AuthModal = ({ trigger, defaultTab = "login", onSuccess }: AuthModalProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -29,11 +30,20 @@ const AuthModal = ({ trigger, defaultTab = "login" }: AuthModalProps) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Mock login
+    // Mock login - in a real app, this would call an API
     setTimeout(() => {
       setIsLoading(false);
       setOpen(false);
-      toast.success("Logged in successfully");
+      
+      // Store user info in localStorage (for demo purposes)
+      localStorage.setItem("user", JSON.stringify({
+        name: "Alex Morgan",
+        email: loginEmail || "alex@example.com",
+        avatar: "https://i.pravatar.cc/150?img=1"
+      }));
+      
+      if (onSuccess) onSuccess();
+      else toast.success("Logged in successfully");
     }, 1000);
   };
   
@@ -41,11 +51,20 @@ const AuthModal = ({ trigger, defaultTab = "login" }: AuthModalProps) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Mock register
+    // Mock register - in a real app, this would call an API
     setTimeout(() => {
       setIsLoading(false);
       setOpen(false);
-      toast.success("Account created successfully");
+      
+      // Store user info in localStorage (for demo purposes)
+      localStorage.setItem("user", JSON.stringify({
+        name: registerName || "New User",
+        email: registerEmail || "user@example.com",
+        avatar: "https://i.pravatar.cc/150?img=2"
+      }));
+      
+      if (onSuccess) onSuccess();
+      else toast.success("Account created successfully");
     }, 1000);
   };
   

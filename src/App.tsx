@@ -13,6 +13,8 @@ import NotFound from "./pages/NotFound";
 import PopularThreadsPage from "./pages/PopularThreadsPage";
 import RecentThreadsPage from "./pages/RecentThreadsPage";
 import FeaturedThreadsPage from "./pages/FeaturedThreadsPage";
+import ProfilePage from "./pages/ProfilePage";
+import UserThreadsPage from "./pages/UserThreadsPage";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +33,8 @@ const App = () => (
           <Route path="/popular" element={<PopularThreadsPage />} />
           <Route path="/recent" element={<RecentThreadsPage />} />
           <Route path="/featured" element={<FeaturedThreadsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/my-threads" element={<UserThreadsPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
