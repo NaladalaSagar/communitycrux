@@ -1,4 +1,3 @@
-
 import { MessageSquare, BarChart3, Briefcase, Lightbulb, BookOpen, Globe } from "lucide-react";
 import { ReactNode } from "react";
 
@@ -172,7 +171,8 @@ export const threads: Thread[] = [
     downvotes: 5,
     commentCount: 19,
     tags: ["data-viz", "best-practices", "analytics"],
-    views: 1285
+    views: 1285,
+    isFeatured: true
   },
   {
     id: "thread3",
@@ -199,7 +199,8 @@ export const threads: Thread[] = [
     downvotes: 12,
     commentCount: 31,
     tags: ["ai", "content-creation", "product-idea"],
-    views: 974
+    views: 974,
+    isFeatured: true
   },
   {
     id: "thread5",
@@ -212,7 +213,50 @@ export const threads: Thread[] = [
     downvotes: 4,
     commentCount: 37,
     tags: ["react", "javascript", "frontend", "tutorial"],
-    views: 2847
+    views: 2847,
+    isFeatured: true
+  },
+  {
+    id: "thread6",
+    title: "The future of remote work: Trends and predictions",
+    content: "As we continue to adapt to post-pandemic work styles, I've been researching emerging trends in remote and hybrid work. This post summarizes my findings and predictions for how workplace culture will evolve in the coming years.",
+    author: users[1],
+    createdAt: "2023-05-28T13:25:00Z",
+    categoryId: "professional",
+    upvotes: 142,
+    downvotes: 7,
+    commentCount: 23,
+    tags: ["remote-work", "future-of-work", "workplace-culture"],
+    views: 1693,
+    isFeatured: true
+  },
+  {
+    id: "thread7",
+    title: "Building accessible web applications: A practical guide",
+    content: "Accessibility is often overlooked in web development, but it's crucial for creating truly inclusive digital experiences. I've compiled practical tips, tools, and resources to help you make your web applications more accessible.",
+    author: users[2],
+    createdAt: "2023-05-25T10:15:00Z", 
+    categoryId: "learning",
+    upvotes: 178,
+    downvotes: 2,
+    commentCount: 29,
+    tags: ["accessibility", "web-development", "inclusive-design"],
+    views: 2127,
+    isFeatured: true
+  },
+  {
+    id: "thread8",
+    title: "Community challenge: Build something useful in a weekend",
+    content: "Let's motivate each other to create something useful in just one weekend! Share your project ideas, progress updates, and final results. This is a great opportunity to practice your skills and get feedback from the community.",
+    author: users[0],
+    createdAt: "2023-05-22T17:40:00Z",
+    categoryId: "general",
+    upvotes: 93,
+    downvotes: 1,
+    commentCount: 41,
+    tags: ["challenge", "weekend-project", "community-activity"],
+    views: 1254,
+    isFeatured: true
   }
 ];
 

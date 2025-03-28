@@ -55,7 +55,7 @@ const Index = () => {
               </Button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredThreads.map((thread) => (
+              {featuredThreads.slice(0, 3).map((thread) => (
                 <div key={thread.id} className="animate-slide-in" style={{ animationDelay: `${featuredThreads.indexOf(thread) * 0.1}s` }}>
                   <ExpandableFeaturedThread thread={thread} />
                 </div>
