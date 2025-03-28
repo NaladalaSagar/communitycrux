@@ -6,7 +6,7 @@ import ThreadCard from "@/components/thread/ThreadCard";
 import { threads } from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from "@/components/ui/pagination";
 
 const PopularThreadsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
