@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Eye, EyeOff, GitHub, Mail } from "lucide-react";
+import { Eye, EyeOff, Mail } from "lucide-react";
+import { GithubIcon } from "lucide-react";
 
 interface AuthModalProps {
   trigger: React.ReactNode;
@@ -20,20 +20,17 @@ const AuthModal = ({ trigger, defaultTab = "login", onSuccess }: AuthModalProps)
   const [open, setOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   
-  // Form states
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [registerName, setRegisterName] = useState("");
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   
-  // Check if user is already logged in
   useEffect(() => {
     const authState = localStorage.getItem("isAuthenticated");
     setIsAuthenticated(authState === "true");
   }, []);
 
-  // If the user opens the modal and is already authenticated, auto-success
   useEffect(() => {
     if (open && isAuthenticated) {
       if (onSuccess) {
@@ -47,15 +44,12 @@ const AuthModal = ({ trigger, defaultTab = "login", onSuccess }: AuthModalProps)
     e.preventDefault();
     setIsLoading(true);
     
-    // Mock login - in a real app, this would call an API
     setTimeout(() => {
       setIsLoading(false);
       setOpen(false);
       
-      // Store auth state in localStorage
       localStorage.setItem("isAuthenticated", "true");
       
-      // Store user info in localStorage (for demo purposes)
       localStorage.setItem("user", JSON.stringify({
         name: "Alex Morgan",
         email: loginEmail || "alex@example.com",
@@ -71,15 +65,12 @@ const AuthModal = ({ trigger, defaultTab = "login", onSuccess }: AuthModalProps)
     e.preventDefault();
     setIsLoading(true);
     
-    // Mock register - in a real app, this would call an API
     setTimeout(() => {
       setIsLoading(false);
       setOpen(false);
       
-      // Store auth state in localStorage
       localStorage.setItem("isAuthenticated", "true");
       
-      // Store user info in localStorage (for demo purposes)
       localStorage.setItem("user", JSON.stringify({
         name: registerName || "New User",
         email: registerEmail || "user@example.com",
@@ -94,15 +85,12 @@ const AuthModal = ({ trigger, defaultTab = "login", onSuccess }: AuthModalProps)
   const handleSocialLogin = (provider: string) => {
     setIsLoading(true);
     
-    // Mock social login - in a real app, this would redirect to OAuth
     setTimeout(() => {
       setIsLoading(false);
       setOpen(false);
       
-      // Store auth state in localStorage
       localStorage.setItem("isAuthenticated", "true");
       
-      // Store user info in localStorage (for demo purposes)
       localStorage.setItem("user", JSON.stringify({
         name: provider === "github" ? "GitHub User" : "Google User",
         email: provider === "github" ? "github@example.com" : "google@example.com",
@@ -114,13 +102,12 @@ const AuthModal = ({ trigger, defaultTab = "login", onSuccess }: AuthModalProps)
     }, 1000);
   };
   
-  // If the user is already authenticated and they click the trigger, just run onSuccess
   const handleTriggerClick = () => {
     if (isAuthenticated && onSuccess) {
       onSuccess();
-      return false; // Prevent dialog from opening
+      return false;
     }
-    return true; // Allow dialog to open normally
+    return true;
   };
   
   return (
@@ -224,7 +211,7 @@ const AuthModal = ({ trigger, defaultTab = "login", onSuccess }: AuthModalProps)
                   onClick={() => handleSocialLogin("github")}
                   className="flex items-center"
                 >
-                  <GitHub className="h-4 w-4 mr-2" />
+                  <GithubIcon className="h-4 w-4 mr-2" />
                   GitHub
                 </Button>
               </div>
@@ -320,7 +307,7 @@ const AuthModal = ({ trigger, defaultTab = "login", onSuccess }: AuthModalProps)
                   onClick={() => handleSocialLogin("github")}
                   className="flex items-center"
                 >
-                  <GitHub className="h-4 w-4 mr-2" />
+                  <GithubIcon className="h-4 w-4 mr-2" />
                   GitHub
                 </Button>
               </div>
