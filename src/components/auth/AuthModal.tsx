@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Eye, EyeOff, Mail } from "lucide-react";
 import { GithubIcon } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AuthModalProps {
   trigger: React.ReactNode;
@@ -18,98 +20,132 @@ const AuthModal = ({ trigger, defaultTab = "login", onSuccess }: AuthModalProps)
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  
+
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [registerName, setRegisterName] = useState("");
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
-  
-  useEffect(() => {
-    const authState = localStorage.getItem("isAuthenticated");
-    setIsAuthenticated(authState === "true");
-  }, []);
+
+  // NOTE: track session state
+  const [session, setSession] = useState(null);
 
   useEffect(() => {
-    if (open && isAuthenticated) {
-      if (onSuccess) {
-        onSuccess();
+    // Set up Supabase auth event listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        if (session) {
+          // Get user and store in localStorage
+          syncUserProfileToLocalStorage(session.user.id);
+          if (onSuccess) onSuccess();
+          setOpen(false);
+        }
       }
+    );
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session) {
+        syncUserProfileToLocalStorage(session.user.id);
+        if (onSuccess) onSuccess();
+        setOpen(false);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const syncUserProfileToLocalStorage = async (userId: string) => {
+    // Fetch profile from Supabase
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .maybeSingle();
+    if (error) {
+      console.warn("Failed to fetch profile:", error.message);
+      localStorage.removeItem("user");
+      localStorage.setItem("isAuthenticated", "false");
+      return;
+    }
+    if (data) {
+      localStorage.setItem("user", JSON.stringify({
+        name: data.username || "Unknown user",
+        email: session?.user?.email || "",
+        avatar: data.avatar_url || `https://i.pravatar.cc/150?u=${userId}`
+      }));
+      localStorage.setItem("isAuthenticated", "true");
+    }
+  };
+
+  // Email/Password login
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: loginEmail,
+      password: loginPassword,
+    });
+
+    if (error) {
+      setIsLoading(false);
+      toast.error(error.message || "Login failed");
+      return;
+    }
+    setIsLoading(false);
+    toast.success("Logged in successfully");
+    if (data.session?.user.id) {
+      await syncUserProfileToLocalStorage(data.session?.user.id);
+      if (onSuccess) onSuccess();
       setOpen(false);
     }
-  }, [open, isAuthenticated, onSuccess]);
-  
-  const handleLogin = (e: React.FormEvent) => {
+  };
+
+  // Email/Password registration
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    setTimeout(() => {
+
+    const { data, error } = await supabase.auth.signUp({
+      email: registerEmail,
+      password: registerPassword,
+      options: {
+        data: { username: registerName }
+      }
+    });
+
+    if (error) {
       setIsLoading(false);
-      setOpen(false);
-      
-      localStorage.setItem("isAuthenticated", "true");
-      
-      localStorage.setItem("user", JSON.stringify({
-        name: "Alex Morgan",
-        email: loginEmail || "alex@example.com",
-        avatar: "https://i.pravatar.cc/150?img=1"
-      }));
-      
+      toast.error(error.message || "Registration failed");
+      return;
+    }
+    setIsLoading(false);
+    toast.success("Account created! Check your email for confirmation.");
+    if (data.session?.user.id) {
+      await syncUserProfileToLocalStorage(data.session?.user.id);
       if (onSuccess) onSuccess();
-      else toast.success("Logged in successfully");
-    }, 1000);
+      setOpen(false);
+    }
   };
-  
-  const handleRegister = (e: React.FormEvent) => {
-    e.preventDefault();
+
+  // Social OAuth login (Google, GitHub)
+  const handleSocialLogin = async (provider: "google" | "github") => {
     setIsLoading(true);
-    
-    setTimeout(() => {
-      setIsLoading(false);
-      setOpen(false);
-      
-      localStorage.setItem("isAuthenticated", "true");
-      
-      localStorage.setItem("user", JSON.stringify({
-        name: registerName || "New User",
-        email: registerEmail || "user@example.com",
-        avatar: "https://i.pravatar.cc/150?img=2"
-      }));
-      
-      if (onSuccess) onSuccess();
-      else toast.success("Account created successfully");
-    }, 1000);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: window.location.origin }
+    });
+    setIsLoading(false);
+    if (error) {
+      toast.error(error.message || `Could not login with ${provider}`);
+    }
   };
-  
-  const handleSocialLogin = (provider: string) => {
-    setIsLoading(true);
-    
-    setTimeout(() => {
-      setIsLoading(false);
-      setOpen(false);
-      
-      localStorage.setItem("isAuthenticated", "true");
-      
-      localStorage.setItem("user", JSON.stringify({
-        name: provider === "github" ? "GitHub User" : "Google User",
-        email: provider === "github" ? "github@example.com" : "google@example.com",
-        avatar: `https://i.pravatar.cc/150?img=${provider === "github" ? 3 : 4}`
-      }));
-      
-      if (onSuccess) onSuccess();
-      else toast.success(`Logged in with ${provider} successfully`);
-    }, 1000);
-  };
-  
+
   const handleTriggerClick = () => {
-    if (isAuthenticated && onSuccess) {
-      onSuccess();
-      return false;
-    }
     return true;
   };
-  
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild onClick={() => handleTriggerClick()}>
@@ -121,43 +157,40 @@ const AuthModal = ({ trigger, defaultTab = "login", onSuccess }: AuthModalProps)
             Welcome
           </DialogTitle>
         </DialogHeader>
-        
         <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="w-full rounded-none grid grid-cols-2 mb-6">
             <TabsTrigger value="login" className="py-3">Login</TabsTrigger>
             <TabsTrigger value="register" className="py-3">Register</TabsTrigger>
           </TabsList>
-          
           <TabsContent value="login" className="px-6 pb-6 mt-0">
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="login-email">Email</Label>
-                <Input 
-                  id="login-email" 
-                  type="email" 
-                  placeholder="your.email@example.com" 
+                <Input
+                  id="login-email"
+                  type="email"
+                  placeholder="your.email@example.com"
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
                   required
                 />
               </div>
-              
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="login-password">Password</Label>
                   <button
                     type="button"
                     className="text-xs text-accent hover:underline"
-                    onClick={() => toast.info("Password reset email sent")}
+                    onClick={() => toast.info("Please contact admin for password reset.")}
                   >
                     Forgot password?
                   </button>
                 </div>
                 <div className="relative">
-                  <Input 
-                    id="login-password" 
-                    type={showPassword ? "text" : "password"} 
-                    placeholder="••••••••" 
+                  <Input
+                    id="login-password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
                     required
@@ -172,11 +205,9 @@ const AuthModal = ({ trigger, defaultTab = "login", onSuccess }: AuthModalProps)
                   </button>
                 </div>
               </div>
-              
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Logging in..." : "Login"}
               </Button>
-              
               <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t border-border" />
@@ -187,11 +218,10 @@ const AuthModal = ({ trigger, defaultTab = "login", onSuccess }: AuthModalProps)
                   </span>
                 </div>
               </div>
-              
               <div className="grid grid-cols-2 gap-4">
-                <Button 
-                  variant="outline" 
-                  type="button" 
+                <Button
+                  variant="outline"
+                  type="button"
                   disabled={isLoading}
                   onClick={() => handleSocialLogin("google")}
                   className="flex items-center"
@@ -204,9 +234,9 @@ const AuthModal = ({ trigger, defaultTab = "login", onSuccess }: AuthModalProps)
                   </svg>
                   Google
                 </Button>
-                <Button 
-                  variant="outline" 
-                  type="button" 
+                <Button
+                  variant="outline"
+                  type="button"
                   disabled={isLoading}
                   onClick={() => handleSocialLogin("github")}
                   className="flex items-center"
@@ -217,42 +247,39 @@ const AuthModal = ({ trigger, defaultTab = "login", onSuccess }: AuthModalProps)
               </div>
             </form>
           </TabsContent>
-          
           <TabsContent value="register" className="px-6 pb-6 mt-0">
             <form onSubmit={handleRegister} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="register-name">Name</Label>
-                <Input 
-                  id="register-name" 
-                  type="text" 
-                  placeholder="Your name" 
+                <Input
+                  id="register-name"
+                  type="text"
+                  placeholder="Your name"
                   value={registerName}
-                  onChange={(e) => setRegisterName(e.target.value)}
+                  onChange={e => setRegisterName(e.target.value)}
                   required
                 />
               </div>
-              
               <div className="space-y-2">
                 <Label htmlFor="register-email">Email</Label>
-                <Input 
-                  id="register-email" 
-                  type="email" 
-                  placeholder="your.email@example.com" 
+                <Input
+                  id="register-email"
+                  type="email"
+                  placeholder="your.email@example.com"
                   value={registerEmail}
-                  onChange={(e) => setRegisterEmail(e.target.value)}
+                  onChange={e => setRegisterEmail(e.target.value)}
                   required
                 />
               </div>
-              
               <div className="space-y-2">
                 <Label htmlFor="register-password">Password</Label>
                 <div className="relative">
-                  <Input 
-                    id="register-password" 
-                    type={showPassword ? "text" : "password"} 
-                    placeholder="••••••••" 
+                  <Input
+                    id="register-password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
                     value={registerPassword}
-                    onChange={(e) => setRegisterPassword(e.target.value)}
+                    onChange={e => setRegisterPassword(e.target.value)}
                     required
                     className="pr-10"
                   />
@@ -268,11 +295,9 @@ const AuthModal = ({ trigger, defaultTab = "login", onSuccess }: AuthModalProps)
                   Password must be at least 8 characters long
                 </p>
               </div>
-              
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Creating account..." : "Create account"}
               </Button>
-              
               <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t border-border" />
@@ -283,11 +308,10 @@ const AuthModal = ({ trigger, defaultTab = "login", onSuccess }: AuthModalProps)
                   </span>
                 </div>
               </div>
-              
               <div className="grid grid-cols-2 gap-4">
-                <Button 
-                  variant="outline" 
-                  type="button" 
+                <Button
+                  variant="outline"
+                  type="button"
                   disabled={isLoading}
                   onClick={() => handleSocialLogin("google")}
                   className="flex items-center"
@@ -300,9 +324,9 @@ const AuthModal = ({ trigger, defaultTab = "login", onSuccess }: AuthModalProps)
                   </svg>
                   Google
                 </Button>
-                <Button 
-                  variant="outline" 
-                  type="button" 
+                <Button
+                  variant="outline"
+                  type="button"
                   disabled={isLoading}
                   onClick={() => handleSocialLogin("github")}
                   className="flex items-center"

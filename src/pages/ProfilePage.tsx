@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -9,6 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UserProfile {
   name: string;
@@ -34,28 +34,45 @@ const ProfilePage = () => {
   });
 
   useEffect(() => {
-    // Check if user is authenticated
-    const isAuthenticated = localStorage.getItem("isAuthenticated");
-    if (isAuthenticated !== "true") {
-      navigate("/");
-      toast.error("Please log in to view your profile");
-      return;
+    async function fetchUserData() {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session?.user) {
+        navigate("/");
+        toast.error("Please log in to view your profile");
+        return;
+      }
+      const user = sessionData.session.user;
+      const { data: userProfile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (userProfile) {
+        setProfile({
+          name: userProfile.username || "Unknown User",
+          email: user.email,
+          avatar: userProfile.avatar_url || `https://i.pravatar.cc/150?u=${user.id}`,
+          bio: userProfile.bio || "Tell us about yourself...",
+          location: userProfile.location || "Your location",
+          website: userProfile.website || "",
+          joinDate: userProfile.created_at
+            ? new Date(userProfile.created_at).toLocaleDateString()
+            : new Date().toLocaleDateString(),
+        });
+        setFormData({
+          name: userProfile.username || "",
+          email: user.email,
+          avatar: userProfile.avatar_url || "",
+          bio: userProfile.bio || "",
+          location: userProfile.location || "",
+          website: userProfile.website || "",
+          joinDate: userProfile.created_at
+            ? new Date(userProfile.created_at).toLocaleDateString()
+            : new Date().toLocaleDateString(),
+        });
+      }
     }
-
-    // Load user profile
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      const userProfile: UserProfile = {
-        ...parsedUser,
-        bio: parsedUser.bio || "Tell us about yourself...",
-        location: parsedUser.location || "Your location",
-        website: parsedUser.website || "",
-        joinDate: parsedUser.joinDate || new Date().toLocaleDateString()
-      };
-      setProfile(userProfile);
-      setFormData(userProfile);
-    }
+    fetchUserData();
   }, [navigate]);
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -65,12 +82,35 @@ const ProfilePage = () => {
     });
   };
 
-  const handleSaveProfile = () => {
-    // Save profile to localStorage (in a real app this would be an API call)
-    localStorage.setItem("user", JSON.stringify(formData));
-    setProfile(formData);
-    setIsEditing(false);
+  const handleSaveProfile = async () => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData?.session?.user) {
+      toast.error("Not authenticated");
+      return;
+    }
+    const userId = sessionData.session.user.id;
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        username: formData.name,
+        avatar_url: formData.avatar,
+        bio: formData.bio,
+        location: formData.location,
+        website: formData.website,
+      })
+      .eq("id", userId);
+    if (error) {
+      toast.error("Failed to update profile");
+      return;
+    }
     toast.success("Profile updated successfully");
+    setProfile({ ...formData, joinDate: profile?.joinDate || "" });
+    setIsEditing(false);
+    localStorage.setItem("user", JSON.stringify({
+      name: formData.name,
+      email: formData.email,
+      avatar: formData.avatar
+    }));
   };
 
   if (!profile) {
@@ -88,13 +128,10 @@ const ProfilePage = () => {
   return (
     <Layout>
       <div className="container px-4 py-8 animate-fade-in">
-        {/* Profile header */}
         <div className="w-full max-w-4xl mx-auto mb-8">
           <div className="relative">
-            {/* Cover photo */}
             <div className="h-64 w-full bg-gradient-to-r from-primary/30 to-accent/30 rounded-t-xl"></div>
             
-            {/* Profile picture and name */}
             <div className="absolute -bottom-16 left-8">
               <Avatar className="h-32 w-32 border-4 border-background animate-scale-in">
                 <AvatarImage src={profile.avatar} alt={profile.name} />
@@ -104,7 +141,6 @@ const ProfilePage = () => {
               </Avatar>
             </div>
 
-            {/* Edit button */}
             <div className="absolute -bottom-16 right-8">
               <Button 
                 onClick={() => setIsEditing(!isEditing)}
@@ -116,7 +152,6 @@ const ProfilePage = () => {
             </div>
           </div>
           
-          {/* Profile info */}
           <div className="mt-20 px-8">
             <h1 className="text-3xl font-bold animate-slide-in" style={{ animationDelay: "0.1s" }}>
               {profile.name}
@@ -132,7 +167,6 @@ const ProfilePage = () => {
           </div>
         </div>
 
-        {/* Profile tabs */}
         <div className="w-full max-w-4xl mx-auto">
           <Tabs defaultValue="about" className="w-full">
             <TabsList className="w-full justify-start border-b rounded-none px-8 pb-0">

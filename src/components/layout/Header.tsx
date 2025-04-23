@@ -20,34 +20,40 @@ const Header = () => {
   const [user, setUser] = useState<any>(null);
   const { addNotification } = useNotifications();
 
-  // Load authentication state from localStorage on component mount
   useEffect(() => {
-    const authState = localStorage.getItem("isAuthenticated");
-    if (authState === "true") {
-      setIsAuthenticated(true);
-      
-      // Load user data
-      const userData = localStorage.getItem("user");
-      if (userData) {
-        setUser(JSON.parse(userData));
+    // Listen for auth changes via Supabase directly
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (session && session.user) {
+          setIsAuthenticated(true);
+          // Update localStorage & fetch user profile
+          const profileStr = localStorage.getItem("user");
+          setUser(profileStr ? JSON.parse(profileStr) : null);
+        } else {
+          setIsAuthenticated(false);
+          setUser(null);
+        }
       }
-    }
+    );
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setIsAuthenticated(true);
+        const profileStr = localStorage.getItem("user");
+        setUser(profileStr ? JSON.parse(profileStr) : null);
+      }
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   // Handle login
   const handleLogin = () => {
     setIsAuthenticated(true);
-    localStorage.setItem("isAuthenticated", "true");
-    
-    // Load updated user data
     const userData = localStorage.getItem("user");
     if (userData) {
       setUser(JSON.parse(userData));
     }
-    
     toast.success("Logged in successfully");
-    
-    // Add a welcome notification
     addNotification(
       "Welcome back!",
       "Thanks for logging in. Explore the latest discussions in the community."
@@ -55,9 +61,12 @@ const Header = () => {
   };
 
   // Handle logout
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     setIsAuthenticated(false);
+    setUser(null);
     localStorage.setItem("isAuthenticated", "false");
+    localStorage.removeItem("user");
     toast.success("Logged out successfully");
   };
 
