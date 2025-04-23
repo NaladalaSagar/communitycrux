@@ -44,44 +44,41 @@ const ProfilePage = () => {
         return;
       }
       const user = sessionData.session.user;
-      
-      // First, get the basic profile
+
+      // Get the profile including new fields
       const { data: userProfile } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", user.id)
         .maybeSingle();
-      
+
       if (userProfile) {
-        // Set the profile with the data available from Supabase
-        // Note: bio, location and website aren't in the table yet, but we'll handle them as if they were
         setProfile({
           name: userProfile.username || "Unknown User",
           email: user.email,
           avatar: userProfile.avatar_url || `https://i.pravatar.cc/150?u=${user.id}`,
-          bio: "",  // Default value since not in the DB yet
-          location: "",  // Default value since not in the DB yet
-          website: "",  // Default value since not in the DB yet
+          bio: userProfile.bio || "",
+          location: userProfile.location || "",
+          website: userProfile.website || "",
           joinDate: userProfile.created_at
             ? new Date(userProfile.created_at).toLocaleDateString()
             : new Date().toLocaleDateString(),
         });
-        
-        // Also initialize the form data
+
         setFormData({
           name: userProfile.username || "",
           email: user.email,
           avatar: userProfile.avatar_url || "",
-          bio: "",  // Default value since not in the DB yet
-          location: "",  // Default value since not in the DB yet
-          website: "",  // Default value since not in the DB yet
+          bio: userProfile.bio || "",
+          location: userProfile.location || "",
+          website: userProfile.website || "",
           joinDate: userProfile.created_at
             ? new Date(userProfile.created_at).toLocaleDateString()
             : new Date().toLocaleDateString(),
         });
       }
     }
-    
+
     fetchUserData();
   }, [navigate]);
 
@@ -98,26 +95,28 @@ const ProfilePage = () => {
       toast.error("Not authenticated");
       return;
     }
-    
+
     const userId = sessionData.session.user.id;
     const { error } = await supabase
       .from("profiles")
       .update({
         username: formData.name,
         avatar_url: formData.avatar,
-        // Note: We're not updating bio, location, website yet as they're not in the DB schema
+        bio: formData.bio,
+        location: formData.location,
+        website: formData.website,
       })
       .eq("id", userId);
-      
+
     if (error) {
       toast.error("Failed to update profile");
       return;
     }
-    
+
     toast.success("Profile updated successfully");
     setProfile({ ...formData, joinDate: profile?.joinDate || "" });
     setIsEditing(false);
-    
+
     localStorage.setItem("user", JSON.stringify({
       name: formData.name,
       email: formData.email,
@@ -143,7 +142,7 @@ const ProfilePage = () => {
         <div className="w-full max-w-4xl mx-auto mb-8">
           <div className="relative">
             <div className="h-64 w-full bg-gradient-to-r from-primary/30 to-accent/30 rounded-t-xl"></div>
-            
+
             <div className="absolute -bottom-16 left-8">
               <Avatar className="h-32 w-32 border-4 border-background animate-scale-in">
                 <AvatarImage src={profile.avatar} alt={profile.name} />
@@ -154,7 +153,7 @@ const ProfilePage = () => {
             </div>
 
             <div className="absolute -bottom-16 right-8">
-              <Button 
+              <Button
                 onClick={() => setIsEditing(!isEditing)}
                 variant="outline"
                 className="shadow-sm"
@@ -163,7 +162,7 @@ const ProfilePage = () => {
               </Button>
             </div>
           </div>
-          
+
           <div className="mt-20 px-8">
             <h1 className="text-3xl font-bold animate-slide-in" style={{ animationDelay: "0.1s" }}>
               {profile.name}
@@ -186,7 +185,7 @@ const ProfilePage = () => {
               <TabsTrigger value="activity" className="rounded-b-none data-[state=active]:border-b-2 data-[state=active]:border-primary">Activity</TabsTrigger>
               <TabsTrigger value="threads" className="rounded-b-none data-[state=active]:border-b-2 data-[state=active]:border-primary">Threads</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="about" className="px-8 py-6 animate-fade-in">
               {isEditing ? (
                 <Card>
@@ -197,45 +196,45 @@ const ProfilePage = () => {
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="name">Name</Label>
-                      <Input 
-                        id="name" 
-                        name="name" 
+                      <Input
+                        id="name"
+                        name="name"
                         value={formData.name}
                         onChange={handleFormChange}
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
-                      <Input 
-                        id="email" 
-                        name="email" 
+                      <Input
+                        id="email"
+                        name="email"
                         value={formData.email}
-                        onChange={handleFormChange}
+                        disabled // Email is not editable
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="bio">Bio</Label>
-                      <Input 
-                        id="bio" 
-                        name="bio" 
+                      <Input
+                        id="bio"
+                        name="bio"
                         value={formData.bio}
                         onChange={handleFormChange}
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="location">Location</Label>
-                      <Input 
-                        id="location" 
-                        name="location" 
+                      <Input
+                        id="location"
+                        name="location"
                         value={formData.location}
                         onChange={handleFormChange}
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="website">Website</Label>
-                      <Input 
-                        id="website" 
-                        name="website" 
+                      <Input
+                        id="website"
+                        name="website"
                         value={formData.website}
                         onChange={handleFormChange}
                       />
@@ -249,20 +248,20 @@ const ProfilePage = () => {
                 <div className="space-y-6">
                   <div className="animate-slide-in" style={{ animationDelay: "0.1s" }}>
                     <h3 className="text-lg font-medium">Bio</h3>
-                    <p className="mt-2 text-muted-foreground">{profile.bio}</p>
+                    <p className="mt-2 text-muted-foreground">{profile.bio || "Tell us about yourself..."}</p>
                   </div>
-                  
+
                   <div className="flex flex-col sm:flex-row sm:space-x-12 space-y-4 sm:space-y-0 animate-slide-in" style={{ animationDelay: "0.2s" }}>
                     <div>
                       <h3 className="text-lg font-medium">Location</h3>
-                      <p className="mt-2 text-muted-foreground">{profile.location}</p>
+                      <p className="mt-2 text-muted-foreground">{profile.location || "Your location"}</p>
                     </div>
                     {profile.website && (
                       <div>
                         <h3 className="text-lg font-medium">Website</h3>
-                        <a 
-                          href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`} 
-                          target="_blank" 
+                        <a
+                          href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`}
+                          target="_blank"
                           rel="noopener noreferrer"
                           className="mt-2 text-primary hover:underline inline-block"
                         >
@@ -284,8 +283,8 @@ const ProfilePage = () => {
             <TabsContent value="threads" className="px-8 py-6 animate-fade-in">
               <div className="text-center py-12">
                 <p className="text-muted-foreground">You haven't created any threads yet.</p>
-                <Button 
-                  onClick={() => navigate("/create-thread")} 
+                <Button
+                  onClick={() => navigate("/create-thread")}
                   className="mt-4"
                 >
                   Create Your First Thread
