@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -131,14 +130,26 @@ const AuthModal = ({ trigger, defaultTab = "login", onSuccess }: AuthModalProps)
 
   // Social OAuth login (Google, GitHub)
   const handleSocialLogin = async (provider: "google" | "github") => {
-    setIsLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: { redirectTo: window.location.origin }
-    });
-    setIsLoading(false);
-    if (error) {
-      toast.error(error.message || `Could not login with ${provider}`);
+    try {
+      setIsLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo: window.location.origin }
+      });
+      setIsLoading(false);
+      
+      if (error) {
+        console.error(`OAuth error:`, error);
+        if (error.message.includes("provider is not enabled")) {
+          toast.error(`Please configure ${provider} authentication in your Supabase project settings first.`);
+        } else {
+          toast.error(error.message || `Could not login with ${provider}`);
+        }
+      }
+    } catch (err) {
+      setIsLoading(false);
+      console.error(`OAuth error:`, err);
+      toast.error(`Failed to initialize ${provider} login. Please try again later.`);
     }
   };
 

@@ -63,12 +63,17 @@ const Header = () => {
 
   // Handle logout
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setIsAuthenticated(false);
-    setUser(null);
-    localStorage.setItem("isAuthenticated", "false");
-    localStorage.removeItem("user");
-    toast.success("Logged out successfully");
+    try {
+      await supabase.auth.signOut();
+      setIsAuthenticated(false);
+      setUser(null);
+      localStorage.setItem("isAuthenticated", "false");
+      localStorage.removeItem("user");
+      toast.success("Logged out successfully");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Failed to log out. Please try again.");
+    }
   };
 
   // Handle scroll event to change header appearance
