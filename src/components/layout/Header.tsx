@@ -11,6 +11,7 @@ import AuthModal from "@/components/auth/AuthModal";
 import { toast } from "sonner";
 import NotificationPanel from "@/components/notifications/NotificationPanel";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const Header = () => {
   const navigate = useNavigate();

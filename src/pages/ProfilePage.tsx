@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -10,6 +11,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
+// Update the Supabase profiles table type to include the additional fields
 interface UserProfile {
   name: string;
   email: string;
@@ -42,36 +44,44 @@ const ProfilePage = () => {
         return;
       }
       const user = sessionData.session.user;
+      
+      // First, get the basic profile
       const { data: userProfile } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", user.id)
         .maybeSingle();
+      
       if (userProfile) {
+        // Set the profile with the data available from Supabase
+        // Note: bio, location and website aren't in the table yet, but we'll handle them as if they were
         setProfile({
           name: userProfile.username || "Unknown User",
           email: user.email,
           avatar: userProfile.avatar_url || `https://i.pravatar.cc/150?u=${user.id}`,
-          bio: userProfile.bio || "Tell us about yourself...",
-          location: userProfile.location || "Your location",
-          website: userProfile.website || "",
+          bio: "",  // Default value since not in the DB yet
+          location: "",  // Default value since not in the DB yet
+          website: "",  // Default value since not in the DB yet
           joinDate: userProfile.created_at
             ? new Date(userProfile.created_at).toLocaleDateString()
             : new Date().toLocaleDateString(),
         });
+        
+        // Also initialize the form data
         setFormData({
           name: userProfile.username || "",
           email: user.email,
           avatar: userProfile.avatar_url || "",
-          bio: userProfile.bio || "",
-          location: userProfile.location || "",
-          website: userProfile.website || "",
+          bio: "",  // Default value since not in the DB yet
+          location: "",  // Default value since not in the DB yet
+          website: "",  // Default value since not in the DB yet
           joinDate: userProfile.created_at
             ? new Date(userProfile.created_at).toLocaleDateString()
             : new Date().toLocaleDateString(),
         });
       }
     }
+    
     fetchUserData();
   }, [navigate]);
 
@@ -88,24 +98,26 @@ const ProfilePage = () => {
       toast.error("Not authenticated");
       return;
     }
+    
     const userId = sessionData.session.user.id;
     const { error } = await supabase
       .from("profiles")
       .update({
         username: formData.name,
         avatar_url: formData.avatar,
-        bio: formData.bio,
-        location: formData.location,
-        website: formData.website,
+        // Note: We're not updating bio, location, website yet as they're not in the DB schema
       })
       .eq("id", userId);
+      
     if (error) {
       toast.error("Failed to update profile");
       return;
     }
+    
     toast.success("Profile updated successfully");
     setProfile({ ...formData, joinDate: profile?.joinDate || "" });
     setIsEditing(false);
+    
     localStorage.setItem("user", JSON.stringify({
       name: formData.name,
       email: formData.email,
