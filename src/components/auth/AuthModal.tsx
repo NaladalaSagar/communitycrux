@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -113,7 +112,7 @@ const AuthModal = ({ trigger, defaultTab = "login", onSuccess }: AuthModalProps)
             Welcome
           </DialogTitle>
         </DialogHeader>
-        <TabsContent value="login" className="px-6 pb-6 mt-0">
+        <div className="px-6 pb-6 mt-0">
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="login-email">Email</Label>
@@ -160,7 +159,7 @@ const AuthModal = ({ trigger, defaultTab = "login", onSuccess }: AuthModalProps)
               {isLoading ? "Logging in..." : "Login"}
             </Button>
           </form>
-        </TabsContent>
+        </div>
       </DialogContent>
     </Dialog>
   );
