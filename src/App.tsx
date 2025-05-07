@@ -16,6 +16,13 @@ import RecentThreadsPage from "./pages/RecentThreadsPage";
 import FeaturedThreadsPage from "./pages/FeaturedThreadsPage";
 import ProfilePage from "./pages/ProfilePage";
 import UserThreadsPage from "./pages/UserThreadsPage";
+import HelpCenter from "./pages/HelpCenter";
+import Guidelines from "./pages/Guidelines";
+import FAQ from "./pages/FAQ";
+import Contact from "./pages/Contact";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+import Cookies from "./pages/Cookies";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +44,18 @@ const App = () => (
             <Route path="/featured" element={<FeaturedThreadsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/my-threads" element={<UserThreadsPage />} />
+            
+            {/* Help and support pages */}
+            <Route path="/help" element={<HelpCenter />} />
+            <Route path="/guidelines" element={<Guidelines />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/contact" element={<Contact />} />
+            
+            {/* Legal pages */}
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/cookies" element={<Cookies />} />
+            
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

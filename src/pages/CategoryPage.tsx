@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
@@ -7,10 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ThreadCard from "@/components/thread/ThreadCard";
 import AuthModal from "@/components/auth/AuthModal";
-import { Search, Plus, Clock, TrendingUp, ArrowLeft } from "lucide-react";
+import { Search, Plus, Clock, TrendingUp } from "lucide-react";
 import { categories, getThreadsByCategory } from "@/lib/mockData";
 import { Thread } from "@/lib/mockData";
 import CategoryIcon from "@/components/ui/CategoryIcon";
+import BackButton from "@/components/navigation/BackButton";
 
 const CategoryPage = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
@@ -31,11 +31,7 @@ const CategoryPage = () => {
       <Layout>
         <div className="container mx-auto px-4 py-8 text-center">
           <h1 className="text-2xl font-bold mb-4">Category not found</h1>
-          <Button asChild>
-            <Link to="/categories">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Categories
-            </Link>
-          </Button>
+          <BackButton fallbackPath="/categories" label="Back to Categories" />
         </div>
       </Layout>
     );
@@ -81,11 +77,7 @@ const CategoryPage = () => {
       <div className="bg-secondary/30 py-12">
         <div className="container mx-auto px-4">
           <div className="flex items-center mb-2">
-            <Button variant="ghost" size="sm" asChild className="mr-2 p-0 h-6">
-              <Link to="/categories">
-                <ArrowLeft className="h-4 w-4 mr-1" /> Categories
-              </Link>
-            </Button>
+            <BackButton fallbackPath="/categories" label="Categories" className="mr-2" />
           </div>
           <div className="flex items-center mb-2">
             <div className={`inline-flex items-center justify-center rounded-lg p-2 mr-4 ${category.color}`}>

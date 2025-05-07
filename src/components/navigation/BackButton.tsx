@@ -34,8 +34,8 @@ const BackButton = ({
 
   return (
     <Button
-      variant="ghost"
-      className={`group flex items-center gap-1 hover:gap-2 transition-all ${className}`}
+      variant="default"
+      className={`group flex items-center gap-2 bg-accent hover:bg-accent/90 text-white px-4 py-2 rounded-md transition-all ${className}`}
       onClick={handleGoBack}
     >
       <ArrowLeft className="h-4 w-4 transition-transform group-hover:scale-110" />
