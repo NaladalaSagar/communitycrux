@@ -20,6 +20,7 @@ const Header = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<any>(null);
   const { addNotification } = useNotifications();
+  const [initialAuthCheckDone, setInitialAuthCheckDone] = useState(false);
 
   useEffect(() => {
     // Listen for auth changes via Supabase directly
@@ -30,12 +31,22 @@ const Header = () => {
           // Update localStorage & fetch user profile
           const profileStr = localStorage.getItem("user");
           setUser(profileStr ? JSON.parse(profileStr) : null);
+          
+          // Only show login toast when the event is specifically a sign_in event
+          if (event === 'SIGNED_IN' && initialAuthCheckDone) {
+            toast.success("Logged in successfully");
+            addNotification(
+              "Welcome back!",
+              "Thanks for logging in. Explore the latest discussions in the community."
+            );
+          }
         } else {
           setIsAuthenticated(false);
           setUser(null);
         }
       }
     );
+    
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
@@ -43,22 +54,20 @@ const Header = () => {
         const profileStr = localStorage.getItem("user");
         setUser(profileStr ? JSON.parse(profileStr) : null);
       }
+      setInitialAuthCheckDone(true);
     });
+    
     return () => subscription.unsubscribe();
-  }, []);
+  }, [initialAuthCheckDone, addNotification]);
 
-  // Handle login
+  // Handle login - now this is only called from the AuthModal's onSuccess
   const handleLogin = () => {
     setIsAuthenticated(true);
     const userData = localStorage.getItem("user");
     if (userData) {
       setUser(JSON.parse(userData));
     }
-    toast.success("Logged in successfully");
-    addNotification(
-      "Welcome back!",
-      "Thanks for logging in. Explore the latest discussions in the community."
-    );
+    // Toast is now handled in the auth state change listener
   };
 
   // Handle logout
