@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
@@ -14,6 +13,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import AuthModal from "@/components/auth/AuthModal";
 import { categories } from "@/lib/mockData";
+import { Thread, UserProfile } from "@/types";
 
 const ThreadPage = () => {
   const { threadId } = useParams<{ threadId: string }>();
@@ -50,16 +50,10 @@ const ThreadPage = () => {
     if (!threadId) return;
     
     try {
+      // First, fetch basic thread data
       const { data: threadData, error } = await supabase
         .from("threads")
-        .select(`
-          *,
-          author:author_id (
-            id,
-            username,
-            avatar_url
-          )
-        `)
+        .select(`*`)
         .eq("id", threadId)
         .single();
       
@@ -69,6 +63,13 @@ const ThreadPage = () => {
         return;
       }
       
+      // Then fetch author profile separately
+      const { data: authorData, error: authorError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", threadData.author_id)
+        .single();
+      
       // Get vote counts
       const { data: voteData, error: voteError } = await supabase.rpc('get_vote_count', {
         entity_id: threadId,
@@ -76,8 +77,10 @@ const ThreadPage = () => {
       });
       
       if (!voteError && voteData) {
-        setUpvotes(voteData.upvotes || 0);
-        setDownvotes(voteData.downvotes || 0);
+        // Parse the JSON result properly
+        const voteCountData = voteData as { upvotes: number; downvotes: number };
+        setUpvotes(voteCountData.upvotes || 0);
+        setDownvotes(voteCountData.downvotes || 0);
       }
       
       // Get comment count
@@ -85,15 +88,17 @@ const ThreadPage = () => {
         thread_id: threadId
       });
       
+      // Find the category info
       const categoryInfo = categories.find(c => c.id === threadData.category_id);
       
+      // Set thread with all the data
       setThread({
         ...threadData,
         author: {
-          ...threadData.author,
-          name: threadData.author?.username || 'Anonymous',
-          role: threadData.author?.role || 'user',
-          avatar: threadData.author?.avatar_url || `https://avatar.vercel.sh/${threadData.author?.username || 'anonymous'}.png`
+          ...authorData,
+          name: authorData?.username || 'Anonymous',
+          role: authorData?.role || 'user',
+          avatar: authorData?.avatar_url || `https://avatar.vercel.sh/${authorData?.username || 'anonymous'}.png`
         },
         categoryName: categoryInfo?.name || threadData.category_id,
         commentCount: !commentCountError ? commentCountData : 0,
@@ -112,20 +117,10 @@ const ThreadPage = () => {
     if (!threadId) return;
     
     try {
+      // First, fetch basic comments data
       const { data, error } = await supabase
         .from("comments")
-        .select(`
-          *,
-          author:author_id (
-            id,
-            username,
-            avatar_url
-          ),
-          vote_count:id(
-            upvotes:up,
-            downvotes:down
-          )
-        `)
+        .select(`*`)
         .eq("thread_id", threadId)
         .order("created_at", { ascending: true });
       
@@ -136,24 +131,40 @@ const ThreadPage = () => {
       
       // Process and organize comments
       const processedComments = await Promise.all(data.map(async (comment) => {
+        // Fetch author data separately
+        const { data: authorData, error: authorError } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", comment.author_id)
+          .single();
+        
         // Get vote counts for each comment
         const { data: voteData, error: voteError } = await supabase.rpc('get_vote_count', {
           entity_id: comment.id,
           entity_type: 'comment'
         });
         
+        let commentUpvotes = 0;
+        let commentDownvotes = 0;
+        
+        if (!voteError && voteData) {
+          const voteCountData = voteData as { upvotes: number; downvotes: number };
+          commentUpvotes = voteCountData.upvotes || 0;
+          commentDownvotes = voteCountData.downvotes || 0;
+        }
+        
         return {
           ...comment,
           id: comment.id,
           content: comment.content,
           author: {
-            ...comment.author,
-            name: comment.author?.username || 'Anonymous',
-            role: comment.author?.role || 'user',
-            avatar: comment.author?.avatar_url || `https://avatar.vercel.sh/${comment.author?.username || 'anonymous'}.png`
+            ...authorData,
+            name: authorData?.username || 'Anonymous',
+            role: authorData?.role || 'user',
+            avatar: authorData?.avatar_url || `https://avatar.vercel.sh/${authorData?.username || 'anonymous'}.png`
           },
-          upvotes: voteData?.upvotes || 0,
-          downvotes: voteData?.downvotes || 0,
+          upvotes: commentUpvotes,
+          downvotes: commentDownvotes,
           isAnswer: comment.is_answer,
           createdAt: new Date(comment.created_at),
           parentId: comment.parent_id

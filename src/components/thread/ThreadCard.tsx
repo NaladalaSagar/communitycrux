@@ -42,8 +42,10 @@ const ThreadCard = ({ thread, showCategory = false }: ThreadCardProps) => {
       });
       
       if (!voteError && voteData) {
-        setUpvotes(voteData.upvotes || 0);
-        setDownvotes(voteData.downvotes || 0);
+        // Parse the JSON result properly
+        const voteCountData = voteData as { upvotes: number; downvotes: number };
+        setUpvotes(voteCountData.upvotes || 0);
+        setDownvotes(voteCountData.downvotes || 0);
       }
       
       // Get comment count

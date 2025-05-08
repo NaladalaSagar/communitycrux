@@ -7,6 +7,7 @@ import { threads } from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from "@/components/ui/pagination";
+import { Thread } from "@/types";
 
 const PopularThreadsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -15,7 +16,7 @@ const PopularThreadsPage = () => {
   
   // Sort threads by popularity (upvotes - downvotes)
   const popularThreads = [...threads].sort((a, b) => 
-    (b.upvotes - b.downvotes) - (a.upvotes - a.downvotes)
+    ((b.upvotes || 0) - (b.downvotes || 0)) - ((a.upvotes || 0) - (a.downvotes || 0))
   );
   
   // Filter threads based on search query
@@ -67,7 +68,21 @@ const PopularThreadsPage = () => {
             {currentThreads.length > 0 ? (
               currentThreads.map((thread, index) => (
                 <div key={thread.id} className="animate-slide-in" style={{ animationDelay: `${0.1 + (index * 0.05)}s` }}>
-                  <ThreadCard thread={thread} showCategory={true} />
+                  <ThreadCard 
+                    thread={{
+                      id: thread.id,
+                      title: thread.title,
+                      content: thread.content,
+                      author_id: thread.author_id,
+                      category_id: thread.category_id,
+                      created_at: thread.created_at,
+                      updated_at: thread.updated_at,
+                      is_pinned: thread.is_pinned,
+                      tags: thread.tags,
+                      author: thread.author
+                    }} 
+                    showCategory={true} 
+                  />
                 </div>
               ))
             ) : (

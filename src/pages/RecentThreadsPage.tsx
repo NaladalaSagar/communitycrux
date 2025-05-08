@@ -6,8 +6,8 @@ import ThreadCard from "@/components/thread/ThreadCard";
 import { threads } from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { PaginationEllipsis } from "@/components/ui/pagination";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from "@/components/ui/pagination";
+import { Thread } from "@/types";
 
 const RecentThreadsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -16,7 +16,7 @@ const RecentThreadsPage = () => {
   
   // Sort threads by date (most recent first)
   const recentThreads = [...threads].sort((a, b) => 
-    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
   
   // Filter threads based on search query
@@ -68,7 +68,21 @@ const RecentThreadsPage = () => {
             {currentThreads.length > 0 ? (
               currentThreads.map((thread, index) => (
                 <div key={thread.id} className="animate-slide-in" style={{ animationDelay: `${0.1 + (index * 0.05)}s` }}>
-                  <ThreadCard thread={thread} showCategory={true} />
+                  <ThreadCard 
+                    thread={{
+                      id: thread.id,
+                      title: thread.title,
+                      content: thread.content,
+                      author_id: thread.author_id,
+                      category_id: thread.category_id,
+                      created_at: thread.created_at,
+                      updated_at: thread.updated_at,
+                      is_pinned: thread.is_pinned,
+                      tags: thread.tags,
+                      author: thread.author
+                    }} 
+                    showCategory={true} 
+                  />
                 </div>
               ))
             ) : (
