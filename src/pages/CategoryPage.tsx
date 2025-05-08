@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
@@ -7,24 +8,73 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import ThreadCard from "@/components/thread/ThreadCard";
 import AuthModal from "@/components/auth/AuthModal";
 import { Search, Plus, Clock, TrendingUp } from "lucide-react";
-import { categories, getThreadsByCategory } from "@/lib/mockData";
-import { Thread } from "@/lib/mockData";
+import { categories } from "@/lib/mockData";
 import CategoryIcon from "@/components/ui/CategoryIcon";
 import BackButton from "@/components/navigation/BackButton";
+import { supabase } from "@/integrations/supabase/client";
 
 const CategoryPage = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
   const [category, setCategory] = useState(categories.find(c => c.id === categoryId));
-  const [threads, setThreads] = useState<Thread[]>([]);
+  const [threads, setThreads] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("recent");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   
   useEffect(() => {
     if (categoryId) {
       setCategory(categories.find(c => c.id === categoryId));
-      setThreads(getThreadsByCategory(categoryId));
+      loadThreads();
     }
+    
+    // Check if user is authenticated
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsAuthenticated(!!data.session);
+    };
+    
+    checkAuth();
+    
+    // Listen for authentication state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+    });
+    
+    return () => subscription.unsubscribe();
   }, [categoryId]);
+  
+  const loadThreads = async () => {
+    if (!categoryId) return;
+    
+    setIsLoading(true);
+    
+    try {
+      const { data, error } = await supabase
+        .from("threads")
+        .select(`
+          *,
+          author:author_id (
+            id,
+            username,
+            avatar_url
+          )
+        `)
+        .eq("category_id", categoryId);
+      
+      if (error) {
+        console.error("Error fetching threads:", error);
+        setIsLoading(false);
+        return;
+      }
+      
+      setThreads(data || []);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error in loadThreads:", error);
+      setIsLoading(false);
+    }
+  };
   
   if (!category) {
     return (
@@ -45,16 +95,6 @@ const CategoryPage = () => {
         thread.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         thread.content.toLowerCase().includes(searchQuery.toLowerCase())
       );
-    })
-    .sort((a, b) => {
-      if (sortBy === "recent") {
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      } else if (sortBy === "popular") {
-        return (b.upvotes - b.downvotes) - (a.upvotes - a.downvotes);
-      } else if (sortBy === "comments") {
-        return b.commentCount - a.commentCount;
-      }
-      return 0;
     });
   
   return (
@@ -90,20 +130,23 @@ const CategoryPage = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center">
               <p className="text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">{category.threadCount}</span> threads in this category
+                <span className="font-medium text-foreground">{filteredThreads.length}</span> threads in this category
               </p>
             </div>
             
             <div className="flex items-center space-x-2">
-              <Button className="bg-accent hover:bg-accent/90" asChild>
-                <Link to={`/create-thread?category=${category.id}`} className="flex items-center">
-                  <Plus className="h-4 w-4 mr-2" /> New Thread
-                </Link>
-              </Button>
-              <AuthModal 
-                trigger={<Button variant="outline">Sign Up</Button>}
-                defaultTab="register"
-              />
+              {isAuthenticated ? (
+                <Button className="bg-accent hover:bg-accent/90" asChild>
+                  <Link to={`/create-thread?category=${category.id}`} className="flex items-center">
+                    <Plus className="h-4 w-4 mr-2" /> New Thread
+                  </Link>
+                </Button>
+              ) : (
+                <AuthModal 
+                  trigger={<Button className="bg-accent hover:bg-accent/90">Sign In to Post</Button>}
+                  defaultTab="login"
+                />
+              )}
             </div>
           </div>
         </div>
@@ -148,7 +191,11 @@ const CategoryPage = () => {
           </div>
         </div>
         
-        {filteredThreads.length > 0 ? (
+        {isLoading ? (
+          <div className="text-center py-12">
+            <p>Loading threads...</p>
+          </div>
+        ) : filteredThreads.length > 0 ? (
           <div className="space-y-4 animate-fade-in">
             {filteredThreads.map((thread) => (
               <ThreadCard key={thread.id} thread={thread} />
@@ -160,11 +207,18 @@ const CategoryPage = () => {
             <p className="text-muted-foreground mb-6">
               {searchQuery ? "Try a different search query or" : "Be the first to"} start a discussion in this category
             </p>
-            <Button asChild>
-              <Link to={`/create-thread?category=${category.id}`} className="flex items-center">
-                <Plus className="h-4 w-4 mr-2" /> Create New Thread
-              </Link>
-            </Button>
+            {isAuthenticated ? (
+              <Button asChild>
+                <Link to={`/create-thread?category=${category.id}`} className="flex items-center">
+                  <Plus className="h-4 w-4 mr-2" /> Create New Thread
+                </Link>
+              </Button>
+            ) : (
+              <AuthModal 
+                trigger={<Button>Sign In to Create Thread</Button>}
+                defaultTab="login"
+              />
+            )}
           </div>
         )}
       </div>

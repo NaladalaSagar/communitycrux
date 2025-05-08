@@ -4,24 +4,81 @@ import { formatDistanceToNow } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Comment as CommentType } from "@/lib/mockData";
 import VoteButtons from "../ui/VoteButtons";
 import { MessageSquare, Check } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import AuthModal from "@/components/auth/AuthModal";
 
 interface CommentProps {
-  comment: CommentType;
+  comment: any;
+  threadId: string;
   isNested?: boolean;
+  onCommentAdded: () => void;
 }
 
-const Comment = ({ comment, isNested = false }: CommentProps) => {
+const Comment = ({ comment, threadId, isNested = false, onCommentAdded }: CommentProps) => {
   const [isReplying, setIsReplying] = useState(false);
   const [replyContent, setReplyContent] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // Check if user is authenticated
+  useState(() => {
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsAuthenticated(!!data.session);
+    };
+    
+    checkAuth();
+  });
   
-  const handleReply = () => {
-    // Mock reply functionality
-    console.log("Replying with:", replyContent);
-    setReplyContent("");
-    setIsReplying(false);
+  const handleReply = async () => {
+    if (!replyContent.trim()) return;
+    
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("You must be logged in to reply");
+        setIsSubmitting(false);
+        return;
+      }
+      
+      const { error } = await supabase
+        .from("comments")
+        .insert({
+          content: replyContent,
+          thread_id: threadId,
+          parent_id: comment.id,
+          author_id: session.user.id,
+          is_answer: false
+        });
+      
+      if (error) {
+        console.error("Error adding reply:", error);
+        toast.error("Failed to add reply");
+        setIsSubmitting(false);
+        return;
+      }
+      
+      toast.success("Reply added successfully");
+      setReplyContent("");
+      setIsReplying(false);
+      onCommentAdded(); // Refresh comments
+      setIsSubmitting(false);
+    } catch (error) {
+      console.error("Error in handleReply:", error);
+      toast.error("An unexpected error occurred");
+      setIsSubmitting(false);
+    }
   };
   
   return (
@@ -35,7 +92,9 @@ const Comment = ({ comment, isNested = false }: CommentProps) => {
         <div className="mr-4 flex flex-col items-center mt-1">
           <VoteButtons 
             upvotes={comment.upvotes} 
-            downvotes={comment.downvotes} 
+            downvotes={comment.downvotes}
+            entityId={comment.id}
+            entityType="comment" 
             size="sm" 
           />
         </div>
@@ -106,15 +165,16 @@ const Comment = ({ comment, isNested = false }: CommentProps) => {
                   variant="outline" 
                   size="sm"
                   onClick={() => setIsReplying(false)}
+                  disabled={isSubmitting}
                 >
                   Cancel
                 </Button>
                 <Button 
                   size="sm"
                   onClick={handleReply}
-                  disabled={!replyContent.trim()}
+                  disabled={!replyContent.trim() || isSubmitting}
                 >
-                  Post Reply
+                  {isSubmitting ? "Posting..." : "Post Reply"}
                 </Button>
               </div>
             </div>
@@ -123,13 +183,28 @@ const Comment = ({ comment, isNested = false }: CommentProps) => {
           {/* Nested comments */}
           {comment.children && comment.children.length > 0 && (
             <div className="space-y-2">
-              {comment.children.map((child) => (
-                <Comment key={child.id} comment={child} isNested={true} />
+              {comment.children.map((child: any) => (
+                <Comment 
+                  key={child.id} 
+                  comment={child} 
+                  threadId={threadId}
+                  isNested={true} 
+                  onCommentAdded={onCommentAdded}
+                />
               ))}
             </div>
           )}
         </div>
       </div>
+      
+      {/* Auth Modal */}
+      {showAuthModal && (
+        <AuthModal 
+          trigger={<></>}
+          defaultTab="login" 
+          onSuccess={() => setShowAuthModal(false)}
+        />
+      )}
     </div>
   );
 };

@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { categories } from "@/lib/mockData";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import AuthModal from "@/components/auth/AuthModal";
 
 const CreateThread = () => {
   const navigate = useNavigate();
@@ -21,15 +23,37 @@ const CreateThread = () => {
   const [category, setCategory] = useState(categoryFromUrl || "");
   const [tags, setTags] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   
   useEffect(() => {
     if (categoryFromUrl) {
       setCategory(categoryFromUrl);
     }
+    
+    // Check if user is authenticated
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsAuthenticated(!!data.session);
+    };
+    
+    checkAuth();
+    
+    // Listen for authentication state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+    });
+    
+    return () => subscription.unsubscribe();
   }, [categoryFromUrl]);
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
     
     if (!title.trim() || !content.trim() || !category) {
       toast.error("Please fill in all required fields");
@@ -38,12 +62,51 @@ const CreateThread = () => {
     
     setIsSubmitting(true);
     
-    // Mock thread creation
-    setTimeout(() => {
+    try {
+      // Get current user
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("You must be logged in to create a thread");
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // Convert comma-separated tags to array
+      const tagsArray = tags
+        ? tags.split(',').map(tag => tag.trim()).filter(tag => tag !== '').slice(0, 5)
+        : [];
+      
+      // Insert thread into Supabase
+      const { data, error } = await supabase
+        .from('threads')
+        .insert({
+          title,
+          content,
+          author_id: session.user.id,
+          category_id: category,
+          tags: tagsArray,
+          is_pinned: false
+        })
+        .select('id')
+        .single();
+      
+      if (error) {
+        console.error("Error creating thread:", error);
+        toast.error("Failed to create thread");
+        setIsSubmitting(false);
+        return;
+      }
+      
       setIsSubmitting(false);
       toast.success("Thread created successfully");
-      navigate(`/category/${category}`);
-    }, 1000);
+      
+      // Navigate to the new thread page
+      navigate(`/thread/${data.id}`);
+    } catch (error) {
+      console.error("Error creating thread:", error);
+      toast.error("An unexpected error occurred");
+      setIsSubmitting(false);
+    }
   };
   
   return (
@@ -141,6 +204,15 @@ const CreateThread = () => {
           </div>
         </div>
       </div>
+      
+      {/* Auth Modal */}
+      {showAuthModal && (
+        <AuthModal 
+          trigger={<></>}
+          defaultTab="login" 
+          onSuccess={() => setShowAuthModal(false)}
+        />
+      )}
     </Layout>
   );
 };

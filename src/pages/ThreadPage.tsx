@@ -9,34 +9,247 @@ import { Textarea } from "@/components/ui/textarea";
 import Comment from "@/components/thread/Comment";
 import VoteButtons from "@/components/ui/VoteButtons";
 import { ArrowLeft, MessageSquare, Flag, Share, Calendar } from "lucide-react";
-import { getCommentsByThreadId, getThreadById } from "@/lib/mockData";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import AuthModal from "@/components/auth/AuthModal";
+import { categories } from "@/lib/mockData";
 
 const ThreadPage = () => {
   const { threadId } = useParams<{ threadId: string }>();
-  const [thread, setThread] = useState(getThreadById(threadId));
-  const [comments, setComments] = useState(getCommentsByThreadId(threadId || ""));
+  const [thread, setThread] = useState<any>(null);
+  const [comments, setComments] = useState<any[]>([]);
   const [commentContent, setCommentContent] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [upvotes, setUpvotes] = useState(0);
+  const [downvotes, setDownvotes] = useState(0);
   
-  const handleAddComment = () => {
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsAuthenticated(!!data.session);
+    };
+    
+    checkAuth();
+    
+    // Listen for authentication state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+    });
+    
+    loadThread();
+    loadComments();
+    
+    return () => subscription.unsubscribe();
+  }, [threadId]);
+  
+  const loadThread = async () => {
+    if (!threadId) return;
+    
+    try {
+      const { data: threadData, error } = await supabase
+        .from("threads")
+        .select(`
+          *,
+          author:author_id (
+            id,
+            username,
+            avatar_url
+          )
+        `)
+        .eq("id", threadId)
+        .single();
+      
+      if (error) {
+        console.error("Error fetching thread:", error);
+        setIsLoading(false);
+        return;
+      }
+      
+      // Get vote counts
+      const { data: voteData, error: voteError } = await supabase.rpc('get_vote_count', {
+        entity_id: threadId,
+        entity_type: 'thread'
+      });
+      
+      if (!voteError && voteData) {
+        setUpvotes(voteData.upvotes || 0);
+        setDownvotes(voteData.downvotes || 0);
+      }
+      
+      // Get comment count
+      const { data: commentCountData, error: commentCountError } = await supabase.rpc('get_comment_count', {
+        thread_id: threadId
+      });
+      
+      const categoryInfo = categories.find(c => c.id === threadData.category_id);
+      
+      setThread({
+        ...threadData,
+        author: {
+          ...threadData.author,
+          name: threadData.author?.username || 'Anonymous',
+          role: threadData.author?.role || 'user',
+          avatar: threadData.author?.avatar_url || `https://avatar.vercel.sh/${threadData.author?.username || 'anonymous'}.png`
+        },
+        categoryName: categoryInfo?.name || threadData.category_id,
+        commentCount: !commentCountError ? commentCountData : 0,
+        isPinned: threadData.is_pinned,
+        createdAt: new Date(threadData.created_at)
+      });
+      
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error in loadThread:", error);
+      setIsLoading(false);
+    }
+  };
+  
+  const loadComments = async () => {
+    if (!threadId) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from("comments")
+        .select(`
+          *,
+          author:author_id (
+            id,
+            username,
+            avatar_url
+          ),
+          vote_count:id(
+            upvotes:up,
+            downvotes:down
+          )
+        `)
+        .eq("thread_id", threadId)
+        .order("created_at", { ascending: true });
+      
+      if (error) {
+        console.error("Error fetching comments:", error);
+        return;
+      }
+      
+      // Process and organize comments
+      const processedComments = await Promise.all(data.map(async (comment) => {
+        // Get vote counts for each comment
+        const { data: voteData, error: voteError } = await supabase.rpc('get_vote_count', {
+          entity_id: comment.id,
+          entity_type: 'comment'
+        });
+        
+        return {
+          ...comment,
+          id: comment.id,
+          content: comment.content,
+          author: {
+            ...comment.author,
+            name: comment.author?.username || 'Anonymous',
+            role: comment.author?.role || 'user',
+            avatar: comment.author?.avatar_url || `https://avatar.vercel.sh/${comment.author?.username || 'anonymous'}.png`
+          },
+          upvotes: voteData?.upvotes || 0,
+          downvotes: voteData?.downvotes || 0,
+          isAnswer: comment.is_answer,
+          createdAt: new Date(comment.created_at),
+          parentId: comment.parent_id
+        };
+      }));
+      
+      // Organize comments into a tree structure
+      const commentMap = new Map();
+      const rootComments: any[] = [];
+      
+      processedComments.forEach(comment => {
+        commentMap.set(comment.id, { ...comment, children: [] });
+      });
+      
+      processedComments.forEach(comment => {
+        if (comment.parentId) {
+          const parent = commentMap.get(comment.parentId);
+          if (parent) {
+            parent.children.push(commentMap.get(comment.id));
+          } else {
+            rootComments.push(commentMap.get(comment.id));
+          }
+        } else {
+          rootComments.push(commentMap.get(comment.id));
+        }
+      });
+      
+      setComments(rootComments);
+    } catch (error) {
+      console.error("Error in loadComments:", error);
+    }
+  };
+  
+  const handleAddComment = async () => {
     if (!commentContent.trim()) return;
     
-    // Mock adding a comment
-    toast.success("Comment added successfully");
-    setCommentContent("");
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("You must be logged in to comment");
+        setIsSubmitting(false);
+        return;
+      }
+      
+      const { data, error } = await supabase
+        .from("comments")
+        .insert({
+          content: commentContent,
+          thread_id: threadId,
+          author_id: session.user.id,
+          is_answer: false
+        });
+      
+      if (error) {
+        console.error("Error adding comment:", error);
+        toast.error("Failed to add comment");
+        setIsSubmitting(false);
+        return;
+      }
+      
+      toast.success("Comment added successfully");
+      setCommentContent("");
+      loadComments(); // Reload comments
+      setIsSubmitting(false);
+    } catch (error) {
+      console.error("Error in handleAddComment:", error);
+      toast.error("An unexpected error occurred");
+      setIsSubmitting(false);
+    }
   };
   
   const handleShare = () => {
-    // Mock share functionality
     navigator.clipboard.writeText(window.location.href);
     toast.success("Link copied to clipboard");
   };
   
   const handleReport = () => {
-    // Mock report functionality
     toast.success("Thread reported");
   };
+  
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-8 text-center">
+          <p>Loading thread...</p>
+        </div>
+      </Layout>
+    );
+  }
   
   if (!thread) {
     return (
@@ -58,8 +271,8 @@ const ThreadPage = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center mb-6">
           <Button variant="ghost" size="sm" asChild className="p-0 h-6">
-            <Link to={`/category/${thread.categoryId}`}>
-              <ArrowLeft className="h-4 w-4 mr-1" /> Back to {thread.categoryId}
+            <Link to={`/category/${thread.category_id}`}>
+              <ArrowLeft className="h-4 w-4 mr-1" /> Back to {thread.category_id}
             </Link>
           </Button>
         </div>
@@ -70,8 +283,10 @@ const ThreadPage = () => {
             {/* Vote column */}
             <div className="bg-secondary/50 p-6 flex flex-col items-center justify-start gap-2 min-w-[70px]">
               <VoteButtons 
-                upvotes={thread.upvotes} 
-                downvotes={thread.downvotes}
+                upvotes={upvotes} 
+                downvotes={downvotes}
+                entityId={thread.id}
+                entityType="thread"
                 size="lg"
               />
             </div>
@@ -79,13 +294,13 @@ const ThreadPage = () => {
             {/* Content */}
             <div className="flex-grow p-6">
               <div className="flex flex-wrap items-center gap-2 mb-3">
-                {thread.isPinned && (
+                {thread.is_pinned && (
                   <Badge variant="outline" className="text-xs px-1.5 py-0 border-accent/50 text-accent">
                     Pinned
                   </Badge>
                 )}
                 
-                {thread.tags && thread.tags.length > 0 && thread.tags.map((tag, index) => (
+                {thread.tags && thread.tags.length > 0 && thread.tags.map((tag: string, index: number) => (
                   <Badge key={index} variant="outline" className="text-xs px-1.5 py-0">
                     {tag}
                   </Badge>
@@ -166,9 +381,9 @@ const ThreadPage = () => {
             <div className="flex justify-end">
               <Button 
                 onClick={handleAddComment}
-                disabled={!commentContent.trim()}
+                disabled={!commentContent.trim() || isSubmitting}
               >
-                Post Comment
+                {isSubmitting ? "Posting..." : "Post Comment"}
               </Button>
             </div>
           </div>
@@ -176,11 +391,20 @@ const ThreadPage = () => {
           {/* Comments list */}
           <div className="space-y-6">
             {comments.map((comment) => (
-              <Comment key={comment.id} comment={comment} />
+              <Comment key={comment.id} comment={comment} threadId={threadId} onCommentAdded={loadComments} />
             ))}
           </div>
         </div>
       </div>
+      
+      {/* Auth Modal */}
+      {showAuthModal && (
+        <AuthModal 
+          trigger={<></>}
+          defaultTab="login" 
+          onSuccess={() => setShowAuthModal(false)}
+        />
+      )}
     </Layout>
   );
 };
