@@ -97,7 +97,7 @@ const ThreadPage = () => {
         author: {
           ...authorData,
           name: authorData?.username || 'Anonymous',
-          role: authorData?.role || 'user',
+          role: authorData?.bio?.includes('admin') ? 'admin' : 'user', // Add role based on bio content
           avatar: authorData?.avatar_url || `https://avatar.vercel.sh/${authorData?.username || 'anonymous'}.png`
         },
         categoryName: categoryInfo?.name || threadData.category_id,
@@ -160,7 +160,7 @@ const ThreadPage = () => {
           author: {
             ...authorData,
             name: authorData?.username || 'Anonymous',
-            role: authorData?.role || 'user',
+            role: authorData?.bio?.includes('admin') ? 'admin' : 'user', // Add role based on bio content
             avatar: authorData?.avatar_url || `https://avatar.vercel.sh/${authorData?.username || 'anonymous'}.png`
           },
           upvotes: commentUpvotes,

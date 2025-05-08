@@ -11,22 +11,30 @@ export interface UserProfile extends Profile {
   gender?: 'male' | 'female' | 'other' | null;
   name?: string;
   email?: string;
+  role?: string;
 }
 
 export interface Thread {
   id: string;
   title: string;
   content: string;
-  author_id: string;
-  category_id: string;
-  created_at: string;
-  updated_at: string;
-  is_pinned: boolean;
+  authorId: string;
+  categoryId: string;
+  createdAt: string;
+  updatedAt: string;
+  isPinned: boolean;
   tags?: string[];
   upvotes: number;
   downvotes: number;
-  comment_count: number;
+  commentCount: number;
   author?: UserProfile;
+  
+  // Adding raw properties for backward compatibility
+  author_id?: string;
+  category_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  is_pinned?: boolean;
 }
 
 export interface Comment {

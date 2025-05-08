@@ -7,9 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import VoteButtons from "@/components/ui/VoteButtons";
 import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
+import { Thread } from "@/types";
 
 interface ThreadCardProps {
-  thread: {
+  thread: Thread | {
     id: string;
     title: string;
     content: string;
@@ -61,9 +62,13 @@ const ThreadCard = ({ thread, showCategory = false }: ThreadCardProps) => {
     fetchVotesAndComments();
   }, [thread.id]);
 
+  const authorId = thread.authorId || thread.author_id;
+  const categoryId = thread.categoryId || thread.category_id;
+  const createdAt = new Date(thread.createdAt || thread.created_at || '');
+  const isPinned = thread.isPinned || thread.is_pinned;
+  
   const authorName = thread.author?.username || "Anonymous";
   const authorAvatar = thread.author?.avatar_url || `https://avatar.vercel.sh/${authorName}.png`;
-  const createdAt = new Date(thread.created_at);
 
   return (
     <div className="bg-card rounded-xl border border-border/50 overflow-hidden transition-all duration-300 hover:shadow-soft group hover:translate-y-[-2px]">
@@ -85,14 +90,14 @@ const ThreadCard = ({ thread, showCategory = false }: ThreadCardProps) => {
             {/* Title and tags */}
             <div className="mb-2">
               <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                {thread.is_pinned && (
+                {isPinned && (
                   <Badge variant="outline" className="text-xs px-1.5 py-0 border-accent/50 text-accent animate-pulse">
                     Pinned
                   </Badge>
                 )}
                 {showCategory && (
                   <Badge variant="secondary" className="text-xs px-1.5 py-0 animate-fade-in" style={{ animationDelay: "0.1s" }}>
-                    {thread.category_id}
+                    {categoryId}
                   </Badge>
                 )}
                 {thread.tags && thread.tags.length > 0 && thread.tags.slice(0, 3).map((tag, index) => (
