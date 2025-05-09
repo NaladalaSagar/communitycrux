@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import AuthModal from "@/components/auth/AuthModal";
 import { categories } from "@/lib/mockData";
-import { Thread, UserProfile } from "@/types";
+import { Thread, Profile } from "@/types";
 
 const ThreadPage = () => {
   const { threadId } = useParams<{ threadId: string }>();

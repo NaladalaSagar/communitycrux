@@ -69,7 +69,7 @@ const PopularThreadsPage = () => {
               currentThreads.map((thread, index) => (
                 <div key={thread.id} className="animate-slide-in" style={{ animationDelay: `${0.1 + (index * 0.05)}s` }}>
                   <ThreadCard 
-                    thread={thread}
+                    thread={thread as any}
                     showCategory={true} 
                   />
                 </div>

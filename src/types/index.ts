@@ -31,12 +31,12 @@ export interface Thread {
   commentCount?: number;
   author?: Profile;
   
-  // Adding camelCase aliases for easier use in components
-  get authorId(): string { return this.author_id; }
-  get categoryId(): string { return this.category_id; }
-  get createdAt(): string { return this.created_at; }
-  get updatedAt(): string { return this.updated_at; }
-  get isPinned(): boolean { return this.is_pinned; }
+  // Aliases for convenience (not implemented methods)
+  authorId?: string;
+  categoryId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  isPinned?: boolean;
 }
 
 // Comment types
@@ -72,3 +72,6 @@ export type GenderPrediction = {
   gender: 'male' | 'female' | 'other';
   probability: number;
 };
+
+// Export UserProfile as an alias for Profile for backwards compatibility
+export type UserProfile = Profile;

@@ -16,7 +16,7 @@ const RecentThreadsPage = () => {
   
   // Sort threads by date (most recent first)
   const recentThreads = [...threads].sort((a, b) => 
-    new Date(b.createdAt || b.created_at || '').getTime() - new Date(a.createdAt || a.created_at || '').getTime()
+    new Date(b.created_at || b.createdAt || '').getTime() - new Date(a.created_at || a.createdAt || '').getTime()
   );
   
   // Filter threads based on search query
