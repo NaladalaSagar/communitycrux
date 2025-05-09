@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -30,7 +29,7 @@ const AuthModal = ({ trigger, defaultTab = "login", onSuccess }: AuthModalProps)
   const [username, setUsername] = useState("");
 
   // NOTE: track session state
-  const [session, setSession] = useState(null);
+  const [session, setSession] = useState<any>(null);
 
   useEffect(() => {
     // Set up Supabase auth event listener
@@ -55,21 +54,23 @@ const AuthModal = ({ trigger, defaultTab = "login", onSuccess }: AuthModalProps)
       }
     });
     return () => subscription.unsubscribe();
-  }, []);
+  }, [onSuccess]);
 
   const syncUserProfileToLocalStorage = async (userId: string) => {
     // Fetch profile from Supabase
     const { data, error } = await supabase
       .from("profiles")
-      .select("*")
+      .select()
       .eq("id", userId)
       .maybeSingle();
+      
     if (error) {
       console.warn("Failed to fetch profile:", error.message);
       localStorage.removeItem("user");
       localStorage.setItem("isAuthenticated", "false");
       return;
     }
+    
     if (data) {
       localStorage.setItem("user", JSON.stringify({
         name: data.username || "Unknown user",

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ArrowUp, ArrowDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -31,7 +30,7 @@ const VoteButtons = ({ entityId, entityType, upvotes: initialUpvotes, downvotes:
         // Check if user has already voted on this entity
         const { data: voteData, error } = await supabase
           .from("votes")
-          .select("vote_type")
+          .select()
           .eq("entity_id", entityId)
           .eq("entity_type", entityType)
           .eq("user_id", data.session.user.id)

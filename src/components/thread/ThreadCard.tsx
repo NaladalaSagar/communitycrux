@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Calendar, MessageCircle } from "lucide-react";
@@ -62,10 +61,11 @@ const ThreadCard = ({ thread, showCategory = false }: ThreadCardProps) => {
     fetchVotesAndComments();
   }, [thread.id]);
 
-  const authorId = thread.authorId || thread.author_id;
-  const categoryId = thread.categoryId || thread.category_id;
-  const createdAt = new Date(thread.createdAt || thread.created_at || '');
-  const isPinned = thread.isPinned || thread.is_pinned;
+  // Use snake_case properties consistently for compatibility
+  const authorId = thread.author_id;
+  const categoryId = thread.category_id;
+  const createdAt = new Date(thread.created_at || '');
+  const isPinned = thread.is_pinned;
   
   const authorName = thread.author?.username || "Anonymous";
   const authorAvatar = thread.author?.avatar_url || `https://avatar.vercel.sh/${authorName}.png`;

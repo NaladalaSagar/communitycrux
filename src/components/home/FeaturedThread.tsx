@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Calendar, MessageCircle, ThumbsUp, ThumbsDown } from "lucide-react";
@@ -43,7 +42,7 @@ const FeaturedThread = ({ thread: initialThread }: FeaturedThreadProps) => {
         // Check if user has already voted on this thread
         const { data: voteData, error } = await supabase
           .from("votes")
-          .select("vote_type")
+          .select()
           .eq("entity_id", initialThread.id)
           .eq("entity_type", "thread")
           .eq("user_id", data.session.user.id)

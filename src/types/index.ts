@@ -1,42 +1,45 @@
 
-import { Database } from "@/integrations/supabase/types";
-
 // Profile types
-export type Profile = Database['public']['Tables']['profiles']['Row'];
-export type ProfileInsert = Database['public']['Tables']['profiles']['Insert'];
-export type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
-
-// Custom types for our application
-export interface UserProfile extends Profile {
+export interface Profile {
+  id: string;
+  username?: string | null;
+  avatar_url?: string | null;
+  bio?: string | null;
+  created_at: string;
+  // Custom fields for our app
   gender?: 'male' | 'female' | 'other' | null;
   name?: string;
   email?: string;
   role?: string;
 }
 
+// Thread types - supporting both camelCase and snake_case
 export interface Thread {
   id: string;
   title: string;
   content: string;
-  authorId: string;
-  categoryId: string;
-  createdAt: string;
-  updatedAt: string;
-  isPinned: boolean;
-  tags?: string[];
-  upvotes: number;
-  downvotes: number;
-  commentCount: number;
-  author?: UserProfile;
+  author_id: string;
+  category_id: string;
+  created_at: string;
+  updated_at: string;
+  is_pinned: boolean;
+  tags?: string[] | null;
   
-  // Adding raw properties for backward compatibility
-  author_id?: string;
-  category_id?: string;
-  created_at?: string;
-  updated_at?: string;
-  is_pinned?: boolean;
+  // Computed properties
+  upvotes?: number;
+  downvotes?: number;
+  commentCount?: number;
+  author?: Profile;
+  
+  // Adding camelCase aliases for easier use in components
+  get authorId(): string { return this.author_id; }
+  get categoryId(): string { return this.category_id; }
+  get createdAt(): string { return this.created_at; }
+  get updatedAt(): string { return this.updated_at; }
+  get isPinned(): boolean { return this.is_pinned; }
 }
 
+// Comment types
 export interface Comment {
   id: string;
   content: string;
@@ -46,12 +49,15 @@ export interface Comment {
   updated_at: string;
   parent_id?: string | null;
   is_answer: boolean;
-  upvotes: number;
-  downvotes: number;
-  author?: UserProfile;
+  
+  // Computed properties
+  upvotes?: number;
+  downvotes?: number;
+  author?: Profile;
   children?: Comment[];
 }
 
+// Vote types
 export interface Vote {
   id: string;
   user_id: string;
