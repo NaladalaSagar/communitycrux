@@ -16,6 +16,7 @@ import RecentThreadsPage from "./pages/RecentThreadsPage";
 import FeaturedThreadsPage from "./pages/FeaturedThreadsPage";
 import ProfilePage from "./pages/ProfilePage";
 import UserThreadsPage from "./pages/UserThreadsPage";
+import UnansweredThreadsPage from "./pages/UnansweredThreadsPage";
 import HelpCenter from "./pages/HelpCenter";
 import Guidelines from "./pages/Guidelines";
 import FAQ from "./pages/FAQ";
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/create-thread" element={<CreateThread />} />
             <Route path="/popular" element={<PopularThreadsPage />} />
             <Route path="/recent" element={<RecentThreadsPage />} />
+            <Route path="/unanswered" element={<UnansweredThreadsPage />} />
             <Route path="/featured" element={<FeaturedThreadsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/my-threads" element={<UserThreadsPage />} />

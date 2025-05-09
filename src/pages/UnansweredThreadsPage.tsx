@@ -9,7 +9,7 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { Thread } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 
-const PopularThreadsPage = () => {
+const UnansweredThreadsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [threads, setThreads] = useState<Thread[]>([]);
@@ -37,30 +37,22 @@ const PopularThreadsPage = () => {
           return;
         }
         
-        // We'll fetch vote counts for each thread to sort them by popularity
-        const threadsWithVotes = await Promise.all(data.map(async (thread) => {
-          const { data: voteData, error: voteError } = await supabase.rpc('get_vote_count', {
-            entity_id: thread.id,
-            entity_type: 'thread'
+        // We'll filter to get threads with no comments
+        const unansweredThreads = await Promise.all(data.map(async (thread) => {
+          const { data: commentCount, error: commentError } = await supabase.rpc('get_comment_count', {
+            thread_id: thread.id
           });
           
-          if (!voteError && voteData) {
-            const voteCountData = voteData as { upvotes: number; downvotes: number };
-            return { 
-              ...thread, 
-              upvotes: voteCountData.upvotes || 0, 
-              downvotes: voteCountData.downvotes || 0 
-            };
-          }
-          return thread;
+          return { 
+            ...thread, 
+            commentCount: commentError ? 0 : commentCount 
+          };
         }));
         
-        // Sort by popularity (upvotes - downvotes)
-        const sortedThreads = threadsWithVotes.sort((a, b) => 
-          ((b.upvotes || 0) - (b.downvotes || 0)) - ((a.upvotes || 0) - (a.downvotes || 0))
-        );
+        // Filter to threads with no comments
+        const noCommentThreads = unansweredThreads.filter(thread => thread.commentCount === 0);
         
-        setThreads(sortedThreads);
+        setThreads(noCommentThreads);
         setIsLoading(false);
       } catch (error) {
         console.error("Error in fetchThreads:", error);
@@ -90,10 +82,10 @@ const PopularThreadsPage = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-accent/10 to-background/5 -z-10"></div>
         <div className="container px-4 mx-auto">
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-            Popular Discussions
+            Unanswered Discussions
           </h1>
           <p className="text-muted-foreground max-w-2xl">
-            Discover the most upvoted and engaging discussions in our community. Join the conversation on trending topics.
+            These discussions haven't received any responses yet. Be the first to join the conversation and share your insights.
           </p>
         </div>
       </section>
@@ -107,7 +99,7 @@ const PopularThreadsPage = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Search popular discussions..."
+                placeholder="Search unanswered discussions..."
                 className="pl-9 pr-4 py-2"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -132,7 +124,7 @@ const PopularThreadsPage = () => {
               ))
             ) : (
               <div className="text-center py-12">
-                <p className="text-muted-foreground">No discussions found matching your search.</p>
+                <p className="text-muted-foreground">No unanswered discussions found matching your search.</p>
                 <Button 
                   variant="outline" 
                   className="mt-4"
@@ -198,4 +190,4 @@ const PopularThreadsPage = () => {
   );
 };
 
-export default PopularThreadsPage;
+export default UnansweredThreadsPage;

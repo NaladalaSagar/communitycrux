@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,8 @@ import AuthModal from "@/components/auth/AuthModal";
 const RecentDiscussionsSection = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [threads, setThreads] = useState<any[]>([]);
+  const [popularThreads, setPopularThreads] = useState<any[]>([]);
+  const [unansweredThreads, setUnansweredThreads] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -37,7 +40,8 @@ const RecentDiscussionsSection = () => {
     setIsLoading(true);
     
     try {
-      const { data, error } = await supabase
+      // Get recent threads
+      const { data: recentData, error: recentError } = await supabase
         .from("threads")
         .select(`
           *,
@@ -50,13 +54,54 @@ const RecentDiscussionsSection = () => {
         .order("created_at", { ascending: false })
         .limit(10);
       
-      if (error) {
-        console.error("Error fetching threads:", error);
+      if (recentError) {
+        console.error("Error fetching threads:", recentError);
         setIsLoading(false);
         return;
       }
       
-      setThreads(data || []);
+      setThreads(recentData || []);
+      
+      // Process threads to get popular and unanswered ones
+      const threadsWithData = await Promise.all(recentData.map(async (thread) => {
+        // Get vote counts
+        const { data: voteData, error: voteError } = await supabase.rpc('get_vote_count', {
+          entity_id: thread.id,
+          entity_type: 'thread'
+        });
+        
+        let upvotes = 0;
+        let downvotes = 0;
+        
+        if (!voteError && voteData) {
+          const voteCountData = voteData as { upvotes: number; downvotes: number };
+          upvotes = voteCountData.upvotes || 0;
+          downvotes = voteCountData.downvotes || 0;
+        }
+        
+        // Get comment counts
+        const { data: commentCount, error: commentError } = await supabase.rpc('get_comment_count', {
+          thread_id: thread.id
+        });
+        
+        return {
+          ...thread,
+          upvotes,
+          downvotes,
+          commentCount: commentError ? 0 : commentCount
+        };
+      }));
+      
+      // Set popular threads
+      const sortedByPopularity = [...threadsWithData].sort((a, b) => 
+        ((b.upvotes - b.downvotes) - (a.upvotes - a.downvotes))
+      );
+      setPopularThreads(sortedByPopularity);
+      
+      // Set unanswered threads
+      const noComments = threadsWithData.filter(thread => thread.commentCount === 0);
+      setUnansweredThreads(noComments);
+      
       setIsLoading(false);
     } catch (error) {
       console.error("Error in loadThreads:", error);
@@ -70,14 +115,15 @@ const RecentDiscussionsSection = () => {
     thread.content.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
-  // Get threads with no comments for "unanswered" tab
-  const unansweredThreads = threads.filter(async (thread) => {
-    const { data, error } = await supabase.rpc('get_comment_count', {
-      thread_id: thread.id
-    });
-    
-    return !error && data === 0;
-  });
+  const filteredPopularThreads = popularThreads.filter((thread) =>
+    thread.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    thread.content.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  
+  const filteredUnansweredThreads = unansweredThreads.filter((thread) =>
+    thread.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    thread.content.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <section className="py-16 bg-secondary/30">
@@ -147,11 +193,9 @@ const RecentDiscussionsSection = () => {
             </TabsContent>
 
             <TabsContent value="popular" className="space-y-4 mt-0 animate-fade-in">
-              {threads
-                .slice(0, 5)
-                .map((thread) => (
-                  <ThreadCard key={thread.id} thread={thread} showCategory={true} />
-                ))}
+              {filteredPopularThreads.slice(0, 5).map((thread) => (
+                <ThreadCard key={thread.id} thread={thread} showCategory={true} />
+              ))}
               <div className="flex justify-center mt-8">
                 <Button variant="outline" asChild className="animate-scale-in">
                   <Link to="/popular">View more popular discussions</Link>
@@ -160,11 +204,9 @@ const RecentDiscussionsSection = () => {
             </TabsContent>
 
             <TabsContent value="unanswered" className="space-y-4 mt-0 animate-fade-in">
-              {unansweredThreads
-                .slice(0, 5)
-                .map((thread) => (
-                  <ThreadCard key={thread.id} thread={thread} showCategory={true} />
-                ))}
+              {filteredUnansweredThreads.slice(0, 5).map((thread) => (
+                <ThreadCard key={thread.id} thread={thread} showCategory={true} />
+              ))}
               <div className="flex justify-center mt-8">
                 <Button variant="outline" asChild className="animate-scale-in">
                   <Link to="/unanswered">View more unanswered discussions</Link>

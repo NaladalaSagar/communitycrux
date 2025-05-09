@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -24,14 +25,21 @@ const Comment = ({ comment, threadId, isNested = false, onCommentAdded }: Commen
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Check if user is authenticated
-  useState(() => {
+  useEffect(() => {
     const checkAuth = async () => {
       const { data } = await supabase.auth.getSession();
       setIsAuthenticated(!!data.session);
     };
     
     checkAuth();
-  });
+    
+    // Listen for authentication state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+    });
+    
+    return () => subscription.unsubscribe();
+  }, []);
   
   const handleReply = async () => {
     if (!replyContent.trim()) return;

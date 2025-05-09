@@ -1,29 +1,56 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { Input } from "@/components/ui/input";
 import ThreadCard from "@/components/thread/ThreadCard";
-import { threads } from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from "@/components/ui/pagination";
 import { Thread } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
 
 const RecentThreadsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [threads, setThreads] = useState<Thread[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const threadsPerPage = 10;
   
-  // Sort threads by date (most recent first)
-  const recentThreads = [...threads].sort((a, b) => {
-    // Handle both snake_case and camelCase properties
-    const dateB = new Date(b.createdAt || '').getTime();
-    const dateA = new Date(a.createdAt || '').getTime();
-    return dateB - dateA;
-  });
+  useEffect(() => {
+    const fetchThreads = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("threads")
+          .select(`
+            *,
+            author:author_id (
+              id,
+              username,
+              avatar_url
+            )
+          `)
+          .order("created_at", { ascending: false });
+          
+        if (error) {
+          console.error("Error fetching threads:", error);
+          setIsLoading(false);
+          return;
+        }
+        
+        setThreads(data || []);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error in fetchThreads:", error);
+        setIsLoading(false);
+      }
+    };
+    
+    fetchThreads();
+  }, []);
   
   // Filter threads based on search query
-  const filteredThreads = recentThreads.filter(thread =>
+  const filteredThreads = threads.filter(thread =>
     thread.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     thread.content.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -68,11 +95,15 @@ const RecentThreadsPage = () => {
           
           {/* Thread list */}
           <div className="space-y-4 animate-slide-in" style={{ animationDelay: "0.2s" }}>
-            {currentThreads.length > 0 ? (
+            {isLoading ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">Loading discussions...</p>
+              </div>
+            ) : currentThreads.length > 0 ? (
               currentThreads.map((thread, index) => (
                 <div key={thread.id} className="animate-slide-in" style={{ animationDelay: `${0.1 + (index * 0.05)}s` }}>
                   <ThreadCard 
-                    thread={thread as any}
+                    thread={thread}
                     showCategory={true} 
                   />
                 </div>
