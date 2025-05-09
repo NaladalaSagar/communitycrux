@@ -17,8 +17,8 @@ const RecentThreadsPage = () => {
   // Sort threads by date (most recent first)
   const recentThreads = [...threads].sort((a, b) => {
     // Handle both snake_case and camelCase properties
-    const dateB = new Date(b.created_at || b.createdAt || '').getTime();
-    const dateA = new Date(a.created_at || a.createdAt || '').getTime();
+    const dateB = new Date(b.createdAt || '').getTime();
+    const dateA = new Date(a.createdAt || '').getTime();
     return dateB - dateA;
   });
   
