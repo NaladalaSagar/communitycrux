@@ -44,7 +44,7 @@ export const populateDatabase = async () => {
         .upsert({
           id: user.id,
           username: user.username || user.name,
-          avatar_url: user.avatar_url || `https://avatar.vercel.sh/${user.name}.png`,
+          avatar_url: user.avatar || `https://avatar.vercel.sh/${user.name}.png`,
           bio: user.role === "admin" ? "Admin user" : user.role === "moderator" ? "Moderator" : "Regular user"
         });
         
@@ -62,9 +62,9 @@ export const populateDatabase = async () => {
           id: thread.id,
           title: thread.title,
           content: thread.content,
-          author_id: thread.authorId || thread.author_id,
-          category_id: thread.categoryId || thread.category_id,
-          is_pinned: thread.isPinned || thread.is_pinned || false,
+          author_id: thread.author.id,
+          category_id: thread.categoryId,
+          is_pinned: thread.isPinned || false,
           tags: thread.tags || []
         });
         
