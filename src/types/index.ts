@@ -31,7 +31,7 @@ export interface Thread {
   commentCount?: number;
   author?: Profile;
   
-  // Aliases for convenience (not implemented methods)
+  // Aliases for convenience (from mockData.ts)
   authorId?: string;
   categoryId?: string;
   createdAt?: string;

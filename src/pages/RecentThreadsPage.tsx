@@ -15,9 +15,12 @@ const RecentThreadsPage = () => {
   const threadsPerPage = 10;
   
   // Sort threads by date (most recent first)
-  const recentThreads = [...threads].sort((a, b) => 
-    new Date(b.created_at || b.createdAt || '').getTime() - new Date(a.created_at || a.createdAt || '').getTime()
-  );
+  const recentThreads = [...threads].sort((a, b) => {
+    // Handle both snake_case and camelCase properties
+    const dateB = new Date(b.created_at || b.createdAt || '').getTime();
+    const dateA = new Date(a.created_at || a.createdAt || '').getTime();
+    return dateB - dateA;
+  });
   
   // Filter threads based on search query
   const filteredThreads = recentThreads.filter(thread =>
@@ -69,7 +72,7 @@ const RecentThreadsPage = () => {
               currentThreads.map((thread, index) => (
                 <div key={thread.id} className="animate-slide-in" style={{ animationDelay: `${0.1 + (index * 0.05)}s` }}>
                   <ThreadCard 
-                    thread={thread}
+                    thread={thread as any}
                     showCategory={true} 
                   />
                 </div>
