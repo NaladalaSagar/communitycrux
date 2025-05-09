@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { threads as mockThreads, users as mockUsers } from "@/lib/mockData";
+import { threads as mockThreads, users as mockUsers, categories } from "@/lib/mockData";
+import { toast } from "sonner";
 
 /**
  * This utility function populates the database with mock data for testing.
@@ -16,6 +17,7 @@ export const populateDatabase = async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
     console.error("You must be logged in to populate the database");
+    toast.error("You must be logged in to populate the database");
     return;
   }
   
@@ -28,13 +30,11 @@ export const populateDatabase = async () => {
       
     if (threadsError) {
       console.error("Error checking if threads exist:", threadsError);
+      toast.error("Error checking if threads exist");
       return;
     }
     
-    if (existingThreads && existingThreads.length > 0) {
-      console.log("Database already contains threads. No need to populate.");
-      return;
-    }
+    console.log(`Found ${existingThreads?.length || 0} existing threads`);
     
     // Create profiles for mock users
     console.log("Creating profiles for mock users...");
@@ -93,7 +93,7 @@ export const populateDatabase = async () => {
             vote_type: 'up'
           });
           
-        if (error) {
+        if (error && error.code !== "23505") { // Ignore unique constraint violations
           console.error(`Error adding upvote to thread "${thread.title}":`, error);
         }
       }
@@ -115,13 +115,13 @@ export const populateDatabase = async () => {
             vote_type: 'down'
           });
           
-        if (error) {
+        if (error && error.code !== "23505") { // Ignore unique constraint violations
           console.error(`Error adding downvote to thread "${thread.title}":`, error);
         }
       }
     }
     
-    // Add some comments to some threads
+    // Add some comments to all threads
     console.log("Adding comments to threads...");
     const commentContents = [
       "Great post! I found this really helpful.",
@@ -136,9 +136,10 @@ export const populateDatabase = async () => {
       "This solved my problem. Thank you!"
     ];
     
-    for (const thread of mockThreads.slice(0, Math.floor(mockThreads.length * 0.7))) {
-      // Random number of comments between 0 and 5
-      const commentCount = Math.floor(Math.random() * 5);
+    // Add comments to every thread instead of just 70%
+    for (const thread of mockThreads) {
+      // Random number of comments between 2 and 6 (ensure we have some comments on each thread)
+      const commentCount = Math.floor(Math.random() * 4) + 2;
       
       for (let i = 0; i < commentCount; i++) {
         // Use a random user ID from the mock users
@@ -164,7 +165,7 @@ export const populateDatabase = async () => {
         }
         
         // Add some upvotes to comments
-        if (comment) {
+        if (comment && comment.length > 0) {
           const upvotes = Math.floor(Math.random() * 5);
           
           for (let j = 0; j < upvotes; j++) {
@@ -185,14 +186,38 @@ export const populateDatabase = async () => {
               console.error(`Error adding upvote to comment:`, error);
             }
           }
+          
+          // Add some reply comments (nested comments)
+          if (Math.random() > 0.5) {
+            const replyUserIndex = Math.floor(Math.random() * mockUsers.length);
+            const replyUserId = mockUsers[replyUserIndex].id;
+            const replyContentIndex = Math.floor(Math.random() * commentContents.length);
+            const replyContent = `In reply to that: ${commentContents[replyContentIndex]}`;
+            
+            const { error: replyError } = await supabase
+              .from("comments")
+              .insert({
+                thread_id: thread.id,
+                author_id: replyUserId,
+                content: replyContent,
+                is_answer: false,
+                parent_id: comment[0].id
+              });
+              
+            if (replyError) {
+              console.error(`Error adding reply comment:`, replyError);
+            }
+          }
         }
       }
     }
     
     console.log("Database population complete!");
+    toast.success("Database populated successfully!");
     return { success: true, message: "Database populated successfully!" };
   } catch (error) {
     console.error("Error populating database:", error);
+    toast.error("Error populating database. See console for details.");
     return { success: false, error };
   }
 };

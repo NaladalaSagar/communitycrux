@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ThreadCard from "@/components/thread/ThreadCard";
 import AuthModal from "@/components/auth/AuthModal";
-import { Search, Plus, Clock, TrendingUp } from "lucide-react";
+import { Search, Plus, Clock, TrendingUp, Database } from "lucide-react";
 import { categories } from "@/lib/mockData";
 import CategoryIcon from "@/components/ui/CategoryIcon";
 import BackButton from "@/components/navigation/BackButton";
@@ -76,6 +76,20 @@ const CategoryPage = () => {
     }
   };
   
+  // Sort threads based on selected option
+  const sortThreads = (unsortedThreads: any[]) => {
+    if (sortBy === 'recent') {
+      return [...unsortedThreads].sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+    } else if (sortBy === 'popular') {
+      // We need to add vote counts to perform this sort correctly
+      return unsortedThreads;
+    } else {
+      return unsortedThreads;
+    }
+  };
+  
   if (!category) {
     return (
       <Layout>
@@ -88,7 +102,7 @@ const CategoryPage = () => {
   }
   
   // Filter and sort threads
-  const filteredThreads = threads
+  const filteredThreads = sortThreads(threads)
     .filter(thread => {
       if (!searchQuery) return true;
       return (
@@ -207,18 +221,31 @@ const CategoryPage = () => {
             <p className="text-muted-foreground mb-6">
               {searchQuery ? "Try a different search query or" : "Be the first to"} start a discussion in this category
             </p>
-            {isAuthenticated ? (
-              <Button asChild>
-                <Link to={`/create-thread?category=${category.id}`} className="flex items-center">
-                  <Plus className="h-4 w-4 mr-2" /> Create New Thread
-                </Link>
-              </Button>
-            ) : (
-              <AuthModal 
-                trigger={<Button>Sign In to Create Thread</Button>}
-                defaultTab="login"
-              />
-            )}
+            
+            <div className="flex flex-col items-center justify-center gap-4">
+              {!searchQuery && (
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2 mb-4"
+                  onClick={() => (window as any).populateDatabase()}
+                >
+                  <Database className="h-4 w-4" /> Populate Database with Mock Data
+                </Button>
+              )}
+              
+              {isAuthenticated ? (
+                <Button asChild>
+                  <Link to={`/create-thread?category=${category.id}`} className="flex items-center">
+                    <Plus className="h-4 w-4 mr-2" /> Create New Thread
+                  </Link>
+                </Button>
+              ) : (
+                <AuthModal 
+                  trigger={<Button>Sign In to Create Thread</Button>}
+                  defaultTab="login"
+                />
+              )}
+            </div>
           </div>
         )}
       </div>

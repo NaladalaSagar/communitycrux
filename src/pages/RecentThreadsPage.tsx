@@ -4,7 +4,7 @@ import Layout from "@/components/layout/Layout";
 import { Input } from "@/components/ui/input";
 import ThreadCard from "@/components/thread/ThreadCard";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
+import { Search, Database } from "lucide-react";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from "@/components/ui/pagination";
 import { Thread } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -110,14 +110,28 @@ const RecentThreadsPage = () => {
               ))
             ) : (
               <div className="text-center py-12">
-                <p className="text-muted-foreground">No discussions found matching your search.</p>
-                <Button 
-                  variant="outline" 
-                  className="mt-4"
-                  onClick={() => setSearchQuery("")}
-                >
-                  Clear search
-                </Button>
+                {searchQuery ? (
+                  <>
+                    <p className="text-muted-foreground mb-6">No discussions found matching your search.</p>
+                    <Button 
+                      variant="outline" 
+                      className="mt-4"
+                      onClick={() => setSearchQuery("")}
+                    >
+                      Clear search
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-muted-foreground mb-6">No discussions found. Populate the database to see discussions.</p>
+                    <Button 
+                      className="flex items-center gap-2 animate-pulse"
+                      onClick={() => (window as any).populateDatabase()}
+                    >
+                      <Database className="h-4 w-4" /> Populate Database
+                    </Button>
+                  </>
+                )}
               </div>
             )}
           </div>
